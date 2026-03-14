@@ -24,6 +24,8 @@ import { screen as posthogScreen, capture } from '../../src/engines/monitoring/p
 import { useBillingStore } from '../../src/engines/billing/billingStore';
 import { useConfigStore } from '../../src/engines/config/configStore';
 import { FeatureFlags, DEFAULT_FLAGS } from '../../src/engines/config/featureFlags';
+import { getToken, requestPermission } from '../../src/engines/notification/pushTokenService';
+import * as Clipboard from 'expo-clipboard';
 import type { UserRole } from '../../src/engines/auth/authStore';
 import type { PlanId } from '../../src/engines/billing/plans';
 
@@ -46,10 +48,17 @@ export default function MyScreen() {
   const setConfigFlag = useConfigStore((s) => s.setFlag);
   const [deleteStep, setDeleteStep] = useState(0); // 0=숨김, 1=확인1, 2=확인2, 3=삭제중
   const [leaveLoading, setLeaveLoading] = useState(false);
+  const [fcmToken, setFcmToken] = useState<string | null>(null);
 
   useEffect(() => {
     posthogScreen('MyTab');
   }, []);
+
+  // 개발자 도구: FCM 토큰 자동 로드 (마스터 전용)
+  useEffect(() => {
+    if (!permissions.accessAllScreens) return;
+    getToken().then(setFcmToken).catch(() => {});
+  }, [permissions.accessAllScreens]);
 
   // ── 탈퇴 3단계 ──
   const handleDeleteStep1 = () => setDeleteStep(1);
@@ -119,6 +128,39 @@ export default function MyScreen() {
     const next = !configFlags[FeatureFlags.MAINTENANCE_MODE];
     setConfigFlag(FeatureFlags.MAINTENANCE_MODE, next);
     capture('dev_tools_maintenance_toggle', { value: next });
+  };
+
+  const handleCopyToken = async () => {
+    if (!fcmToken) {
+      Alert.alert('토큰 없음', '아직 FCM 토큰이 발급되지 않았습니다.');
+      return;
+    }
+    await Clipboard.setStringAsync(fcmToken);
+    Alert.alert('복사 완료', '토큰이 클립보드에 복사됐습니다.');
+  };
+
+  const handlePushTest = async () => {
+    if (!fcmToken) {
+      Alert.alert('토큰 없음', '먼저 [권한 재요청]을 눌러 토큰을 발급받으세요.');
+      return;
+    }
+    await Clipboard.setStringAsync(fcmToken);
+    capture('dev_push_test', { timestamp: Date.now() });
+    Alert.alert(
+      '테스트 발송 안내',
+      'FCM 토큰이 복사됐습니다.\nFirebase Console → Messaging → 알림 테스트에서 토큰을 붙여넣어 발송하세요.'
+    );
+  };
+
+  const handleRequestPermission = async () => {
+    const granted = await requestPermission();
+    if (granted) {
+      const token = await getToken();
+      setFcmToken(token);
+      Alert.alert('권한 허용됨', token ? '토큰이 발급됐습니다.' : '토큰 발급에 실패했습니다.');
+    } else {
+      Alert.alert('권한 거부됨', '설정에서 알림 권한을 허용해 주세요.');
+    }
   };
 
   const menuItems = [
@@ -285,6 +327,39 @@ export default function MyScreen() {
                   </View>
                 );
               })}
+            </View>
+
+            {/* 📱 푸시 알림 테스트 */}
+            <View style={styles.devBlock}>
+              <Text style={styles.devLabel}>📱 푸시 알림 테스트</Text>
+              <Text style={styles.devFcmToken} numberOfLines={1}>
+                {fcmToken
+                  ? `${fcmToken.slice(0, 20)}...`
+                  : '(토큰 없음 — 권한 재요청 필요)'}
+              </Text>
+              <View style={styles.devButtonRow}>
+                <TouchableOpacity
+                  style={[styles.devActionButton, styles.devButtonFlex]}
+                  onPress={handleCopyToken}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.devActionButtonText}>토큰 복사</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.devActionButton, styles.devButtonFlex]}
+                  onPress={handlePushTest}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.devActionButtonText}>테스트 발송</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={[styles.devActionButton, { marginTop: 6 }]}
+                onPress={handleRequestPermission}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.devActionButtonText}>권한 재요청</Text>
+              </TouchableOpacity>
             </View>
 
             {/* maintenance_mode 로컬 토글 */}
@@ -500,6 +575,14 @@ const styles = StyleSheet.create({
   },
   devFlagValueTrue: { color: '#4ade80' },
   devFlagValueFalse: { color: '#6b7280' },
+  devFcmToken: {
+    fontSize: 11,
+    color: '#60a5fa',
+    fontFamily: 'monospace' as const,
+    marginBottom: 8,
+    letterSpacing: 0.3,
+  },
+  devButtonFlex: { flex: 1 },
   // ── 모달 ──
   modalOverlay: {
     flex: 1,

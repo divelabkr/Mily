@@ -9,6 +9,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb } from '../../lib/firebase';
 import { useAuthStore, UserRole } from './authStore';
 import { identify } from '../monitoring/posthogService';
+import { getToken, saveToken } from '../notification/pushTokenService';
 
 export interface UserDoc {
   uid: string;
@@ -90,6 +91,10 @@ export function initAuthListener(): () => void {
             isMaster,
           });
           identify(userDoc.uid, { isMaster, role: userDoc.role });
+          // FCM 토큰 자동 발급 + 저장 (fire-and-forget)
+          getToken()
+            .then((token) => { if (token) saveToken(userDoc.uid, token); })
+            .catch(() => {});
         } else {
           const created = await createUserDoc(
             firebaseUser.uid,

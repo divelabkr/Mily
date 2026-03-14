@@ -1,6 +1,9 @@
 /** @type {import('jest').Config} */
 const config = {
   testEnvironment: 'node',
+  globals: {
+    __DEV__: false,
+  },
   transform: {
     '^.+\\.(ts|tsx|js|jsx)$': ['babel-jest', { presets: ['babel-preset-expo'] }],
   },
@@ -18,6 +21,7 @@ const config = {
     '@amplitude/analytics-react-native': '<rootDir>/tests/__mocks__/amplitude.js',
     'posthog-react-native': '<rootDir>/tests/__mocks__/posthog-react-native.js',
     'firebase/remote-config': '<rootDir>/tests/__mocks__/firebase-remote-config.js',
+    'expo-clipboard': '<rootDir>/tests/__mocks__/expo-clipboard.js',
   },
   testMatch: ['**/tests/**/*.test.ts', '**/tests/**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
