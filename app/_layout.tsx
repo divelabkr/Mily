@@ -9,6 +9,7 @@ import { useAuthStore } from '../src/engines/auth/authStore';
 import { initRevenueCat, syncSubscription } from '../src/engines/billing/billingService';
 import { initAnalytics } from '../src/engines/analytics/analyticsService';
 import { initNotificationHandler, scheduleWeeklyReviewReminder } from '../src/engines/notification/notificationService';
+import * as posthogService from '../src/engines/monitoring/posthogService';
 import { theme } from '../src/ui/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -68,6 +69,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   useEffect(() => {
+    posthogService.init();
     initNotificationHandler();
     const unsubscribe = initAuthListener();
     SplashScreen.hideAsync();

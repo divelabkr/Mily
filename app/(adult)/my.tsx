@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { softDeleteAccount } from '../../src/engines/auth/deleteAccount';
 import {
   removeMemberFromFamily,
 } from '../../src/engines/auth/deleteAccount';
+import { screen as posthogScreen } from '../../src/engines/monitoring/posthogService';
 
 export default function MyScreen() {
   const { t } = useTranslation();
@@ -26,6 +27,10 @@ export default function MyScreen() {
   const user = useAuthStore((s) => s.user);
   const [deleteStep, setDeleteStep] = useState(0); // 0=숨김, 1=확인1, 2=확인2, 3=삭제중
   const [leaveLoading, setLeaveLoading] = useState(false);
+
+  useEffect(() => {
+    posthogScreen('MyTab');
+  }, []);
 
   // ── 탈퇴 3단계 ──
   const handleDeleteStep1 = () => setDeleteStep(1);

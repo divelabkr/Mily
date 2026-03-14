@@ -17,6 +17,7 @@ import {
 } from './requestCardStore';
 import { bufferRequestText } from '../ai/aiToneService';
 import { notifyRequestCardReceived } from '../notification/notificationService';
+import { capture } from '../monitoring/posthogService';
 
 const COOLDOWN_DAYS = 7;
 
@@ -63,6 +64,7 @@ export async function sendRequestCard(
   };
 
   useRequestCardStore.getState().addCard(card);
+  capture('request_card_sent', { requestType });
 
   // urgent: 즉시 부모 푸시 알림
   if (requestType === 'urgent') {

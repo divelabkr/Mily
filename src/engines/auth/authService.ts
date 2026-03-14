@@ -8,6 +8,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb } from '../../lib/firebase';
 import { useAuthStore, UserRole } from './authStore';
+import { identify } from '../monitoring/posthogService';
 
 export interface UserDoc {
   uid: string;
@@ -88,6 +89,7 @@ export function initAuthListener(): () => void {
             onboardingComplete: userDoc.onboardingComplete,
             isMaster,
           });
+          identify(userDoc.uid, { isMaster, role: userDoc.role });
         } else {
           const created = await createUserDoc(
             firebaseUser.uid,
