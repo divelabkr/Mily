@@ -17,6 +17,7 @@ const config = {
     'expo-notifications': '<rootDir>/tests/__mocks__/expo-notifications.js',
     '@amplitude/analytics-react-native': '<rootDir>/tests/__mocks__/amplitude.js',
     'posthog-react-native': '<rootDir>/tests/__mocks__/posthog-react-native.js',
+    'firebase/remote-config': '<rootDir>/tests/__mocks__/firebase-remote-config.js',
   },
   testMatch: ['**/tests/**/*.test.ts', '**/tests/**/*.test.tsx'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

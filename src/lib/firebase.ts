@@ -25,6 +25,10 @@ function getApp_(): FirebaseApp {
 }
 
 // Lazy getter: 처음 호출 시에만 초기화
+export function getFirebaseApp(): FirebaseApp {
+  return getApp_();
+}
+
 export function getFirebaseAuth(): Auth {
   if (!_auth) {
     _auth = getAuth(getApp_());

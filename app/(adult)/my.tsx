@@ -22,6 +22,8 @@ import {
 import { useMasterPermissions } from '../../src/engines/auth/masterGuard';
 import { screen as posthogScreen, capture } from '../../src/engines/monitoring/posthogService';
 import { useBillingStore } from '../../src/engines/billing/billingStore';
+import { useConfigStore } from '../../src/engines/config/configStore';
+import { FeatureFlags, DEFAULT_FLAGS } from '../../src/engines/config/featureFlags';
 import type { UserRole } from '../../src/engines/auth/authStore';
 import type { PlanId } from '../../src/engines/billing/plans';
 
@@ -40,6 +42,8 @@ export default function MyScreen() {
   const subscription = useBillingStore((s) => s.subscription);
   const setSubscription = useBillingStore((s) => s.setSubscription);
   const permissions = useMasterPermissions();
+  const configFlags = useConfigStore((s) => s.flags);
+  const setConfigFlag = useConfigStore((s) => s.setFlag);
   const [deleteStep, setDeleteStep] = useState(0); // 0=숨김, 1=확인1, 2=확인2, 3=삭제중
   const [leaveLoading, setLeaveLoading] = useState(false);
 
@@ -109,6 +113,12 @@ export default function MyScreen() {
   const handlePostHogTest = () => {
     capture('dev_tools_test', { timestamp: Date.now() });
     Alert.alert('PostHog', 'dev_tools_test 이벤트가 발송되었습니다.');
+  };
+
+  const handleMaintenanceToggle = () => {
+    const next = !configFlags[FeatureFlags.MAINTENANCE_MODE];
+    setConfigFlag(FeatureFlags.MAINTENANCE_MODE, next);
+    capture('dev_tools_maintenance_toggle', { value: next });
   };
 
   const menuItems = [
@@ -250,6 +260,50 @@ export default function MyScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.devActionButtonText}>테스트 이벤트 발송</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 🚩 Feature Flags */}
+            <View style={styles.devBlock}>
+              <Text style={styles.devLabel}>🚩 Feature Flags</Text>
+              {Object.entries(FeatureFlags).map(([name, key]) => {
+                const val = configFlags[key] ?? DEFAULT_FLAGS[key];
+                return (
+                  <View key={key} style={styles.devFlagRow}>
+                    <Text style={styles.devFlagKey} numberOfLines={1}>
+                      {key}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.devFlagValue,
+                        val === true && styles.devFlagValueTrue,
+                        val === false && styles.devFlagValueFalse,
+                      ]}
+                    >
+                      {String(val)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* maintenance_mode 로컬 토글 */}
+            <View style={styles.devBlock}>
+              <Text style={styles.devLabel}>maintenance_mode 로컬 테스트</Text>
+              <TouchableOpacity
+                style={[
+                  styles.devActionButton,
+                  configFlags[FeatureFlags.MAINTENANCE_MODE] === true &&
+                    styles.devActionButtonActive,
+                ]}
+                onPress={handleMaintenanceToggle}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.devActionButtonText}>
+                  {configFlags[FeatureFlags.MAINTENANCE_MODE]
+                    ? '🔴 점검모드 ON → OFF로 전환'
+                    : '⚪ 점검모드 OFF → ON으로 전환'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -421,6 +475,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#e0e0f0',
   },
+  devActionButtonActive: {
+    backgroundColor: '#7f1d1d',
+    borderColor: '#ef4444',
+  },
+  devFlagRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#23233a',
+  },
+  devFlagKey: {
+    fontSize: 11,
+    color: '#8080a0',
+    flex: 1,
+    marginRight: 8,
+  },
+  devFlagValue: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#a0a0c0',
+  },
+  devFlagValueTrue: { color: '#4ade80' },
+  devFlagValueFalse: { color: '#6b7280' },
   // ── 모달 ──
   modalOverlay: {
     flex: 1,
