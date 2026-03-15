@@ -14,17 +14,20 @@ jobs:
     # [skip ci] 포함 커밋은 건너뜀 (무한루프 방지 2중 안전장치)
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 10
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install Anthropic SDK
         run: npm install @anthropic-ai/sdk
@@ -37,12 +40,9 @@ jobs:
       - name: Bump Version
         run: node .github/scripts/version-bump.js
 
-      - name: Commit Changes
+      - name: Commit and Push
         run: |
           git config user.name "Mily Bot"
           git config user.email "bot@mily.app"
           git add CHANGELOG.md package.json
-          git diff --staged --quiet || git commit -m "docs: auto-update changelog [skip ci]"
-
-      - name: Push Changes
-        run: git push origin master
+          git diff --staged --quiet || (git commit -m "docs: auto-update changelog [skip ci]" && git push)
