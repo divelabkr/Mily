@@ -171,6 +171,37 @@ export async function notifyParentCouponAlert(
 }
 
 // ──────────────────────────────────────────────
+// 일별 체크인 리마인드 (평일 21:00)
+// ──────────────────────────────────────────────
+
+export async function scheduleDailyCheckInReminder(): Promise<void> {
+  if (!(await requestNotificationPermission())) return;
+
+  await cancelNotificationByType('daily_checkin');
+
+  // 평일 (월~금) 21시에 반복
+  for (let weekday = 2; weekday <= 6; weekday++) {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Mily',
+        body: '오늘 하루 어땠어요? 잠깐 기록해볼까요?',
+        data: { type: 'daily_checkin' },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday,
+        hour: 21,
+        minute: 0,
+      },
+    });
+  }
+}
+
+export async function cancelDailyCheckInReminder(): Promise<void> {
+  await cancelNotificationByType('daily_checkin');
+}
+
+// ──────────────────────────────────────────────
 // 알림 핸들러 초기화 (앱 시작 시)
 // ──────────────────────────────────────────────
 

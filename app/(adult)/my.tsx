@@ -30,7 +30,11 @@ import type { UserRole } from '../../src/engines/auth/authStore';
 import type { PlanId } from '../../src/engines/billing/plans';
 import { sendCoupon, getEligibleUsers } from '../../src/engines/reward/rewardService';
 import type { CouponBrand, CouponValue } from '../../src/engines/reward/rewardTypes';
-import { TextInput } from 'react-native';
+import { TextInput, Switch } from 'react-native';
+import {
+  scheduleDailyCheckInReminder,
+  cancelDailyCheckInReminder,
+} from '../../src/engines/notification/notificationService';
 
 // 역할 표시 레이블
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -52,6 +56,7 @@ export default function MyScreen() {
   const [deleteStep, setDeleteStep] = useState(0); // 0=숨김, 1=확인1, 2=확인2, 3=삭제중
   const [leaveLoading, setLeaveLoading] = useState(false);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
+  const [dailyReminderOn, setDailyReminderOn] = useState(false);
 
   // ── 쿠폰 발송 (마스터 전용) ──
   const [couponTargetUid, setCouponTargetUid] = useState('');
@@ -290,6 +295,32 @@ export default function MyScreen() {
             </Text>
           </TouchableOpacity>
         ))}
+
+        {/* ── 알림 설정 ── */}
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle}>🔔 알림 설정</Text>
+          <View style={styles.settingRow}>
+            <View style={styles.settingTextWrapper}>
+              <Text style={styles.settingLabel}>매일 저녁 기록 알림</Text>
+              <Text style={styles.settingHint}>평일 저녁 9시에 오늘 기록 알림이 와요</Text>
+            </View>
+            <Switch
+              value={dailyReminderOn}
+              onValueChange={async (value) => {
+                setDailyReminderOn(value);
+                if (value) {
+                  await scheduleDailyCheckInReminder().catch(() => {});
+                } else {
+                  await cancelDailyCheckInReminder().catch(() => {});
+                }
+              }}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+            />
+          </View>
+        </Card>
 
         <Text style={styles.disclaimer}>{t('my_not_financial_service')}</Text>
 
@@ -641,6 +672,33 @@ const styles = StyleSheet.create({
   },
   menuText: { fontSize: 16, color: theme.colors.textPrimary },
   menuTextDanger: { color: '#E55' },
+  card: { marginBottom: theme.spacing[4] },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing[4],
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: theme.spacing[2],
+    minHeight: 44,
+  },
+  settingTextWrapper: {
+    flex: 1,
+    marginRight: theme.spacing[3],
+  },
+  settingLabel: {
+    fontSize: 15,
+    color: theme.colors.textPrimary,
+  },
+  settingHint: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
   disclaimer: {
     fontSize: 12,
     color: theme.colors.textSecondary,

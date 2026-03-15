@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -14,10 +14,15 @@ import {
   useCheckInStore,
   getWeeklyTotal,
 } from '../../src/engines/checkin/checkinStore';
+import {
+  getTodaySummary,
+  type DailySummary,
+} from '../../src/engines/checkin/dailySummaryService';
+import { getWeekId } from '../../src/utils/dateUtils';
+import { formatCurrency } from '../../src/utils/formatCurrency';
 import { usePraiseCardStore } from '../../src/engines/praiseCard/praiseCardStore';
 import { loadPraiseCards } from '../../src/engines/praiseCard/praiseCardService';
 import { useAuthStore } from '../../src/engines/auth/authStore';
-import { formatCurrency } from '../../src/utils/formatCurrency';
 import { useRewardStore } from '../../src/engines/reward/rewardStore';
 import { getCoupons, checkAndExpireCoupons } from '../../src/engines/reward/rewardService';
 
@@ -40,6 +45,8 @@ export default function ChildHomeScreen() {
     (c) => c.status === 'active' && c.isVisible
   ).length;
 
+  const [todaySummary, setTodaySummary] = useState<DailySummary | null>(null);
+
   useEffect(() => {
     if (user?.familyId) {
       loadPraiseCards(user.familyId);
@@ -52,6 +59,12 @@ export default function ChildHomeScreen() {
     checkAndExpireCoupons(user.uid).catch(() => {});
     getCoupons(user.uid).then(setCoupons).catch(() => {});
   }, [user?.uid]);
+
+  // 오늘 일별 요약
+  useEffect(() => {
+    if (!user) return;
+    getTodaySummary(user.uid, getWeekId()).then(setTodaySummary).catch(() => {});
+  }, [user?.uid, checkIns.length]);
 
   // 이번 주(최근 7일) 받은 칭찬 카드만 표시
   const recentPraise = praiseCards.filter(
@@ -95,6 +108,21 @@ export default function ChildHomeScreen() {
           <Text style={styles.remainAmount}>{formatCurrency(remaining)}</Text>
           <ProgressBar progress={progress} />
         </Card>
+
+        {/* 오늘 선택소비 요약 (기록 있을 때만) */}
+        {todaySummary && todaySummary.choiceAmount > 0 && (
+          <Card style={styles.dailyCard}>
+            <Text style={styles.dailyLabel}>오늘 선택소비</Text>
+            <Text style={styles.dailyAmount}>
+              {formatCurrency(todaySummary.choiceAmount)}
+            </Text>
+            {todaySummary.checkInCount > 0 && (
+              <Text style={styles.dailyCount}>
+                {todaySummary.checkInCount}건 기록됨
+              </Text>
+            )}
+          </Card>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -158,6 +186,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: theme.colors.textPrimary,
+  },
+  dailyCard: {
+    marginTop: theme.spacing[3],
+    alignItems: 'center',
+    gap: theme.spacing[1],
+    backgroundColor: '#F0F9F7',
+    borderColor: theme.colors.secondary,
+    borderWidth: 1,
+  },
+  dailyLabel: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  dailyAmount: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.secondary,
+  },
+  dailyCount: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
   },
   footer: {
     paddingVertical: theme.spacing[4],

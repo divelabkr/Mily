@@ -14,11 +14,16 @@ import {
 } from '../../src/engines/family/privacySettings';
 import { useRewardStore } from '../../src/engines/reward/rewardStore';
 import { getRewardSettings, updateRewardSettings } from '../../src/engines/reward/rewardService';
+import {
+  scheduleDailyCheckInReminder,
+  cancelDailyCheckInReminder,
+} from '../../src/engines/notification/notificationService';
 
 export default function ChildMeScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const [privacy, setPrivacy] = useState<PrivacySettings | null>(null);
+  const [dailyReminderOn, setDailyReminderOn] = useState(false);
   const rewardSettings = useRewardStore((s) => s.rewardSettings);
   const updateSettingsStore = useRewardStore((s) => s.updateSettings);
 
@@ -35,6 +40,15 @@ export default function ChildMeScreen() {
     if (!user?.uid) return;
     getRewardSettings(user.uid).then(updateSettingsStore).catch(() => {});
   }, [user?.uid]);
+
+  const handleDailyReminderToggle = async (value: boolean) => {
+    setDailyReminderOn(value);
+    if (value) {
+      await scheduleDailyCheckInReminder().catch(() => {});
+    } else {
+      await cancelDailyCheckInReminder().catch(() => {});
+    }
+  };
 
   const handleNotifyParentToggle = async (value: boolean) => {
     if (!user?.uid) return;
@@ -98,6 +112,25 @@ export default function ChildMeScreen() {
             <Switch
               value={privacy?.shareReview ?? false}
               onValueChange={toggleReview}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+            />
+          </View>
+        </Card>
+
+        {/* 🔔 알림 설정 */}
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle}>🔔 알림 설정</Text>
+          <View style={styles.privacyRow}>
+            <View style={styles.settingTextWrapper}>
+              <Text style={styles.privacyLabel}>매일 저녁 기록 알림</Text>
+              <Text style={styles.settingHint}>평일 저녁 9시에 오늘 기록 알림이 와요</Text>
+            </View>
+            <Switch
+              value={dailyReminderOn}
+              onValueChange={handleDailyReminderToggle}
               trackColor={{
                 false: theme.colors.border,
                 true: theme.colors.primary,
