@@ -1,6 +1,10 @@
 {
   "app_name": "Mily",
-  "slogan": "돈 얘기, 이제 싸움 말고 카드로.",
+  "slogan": "미루지 않는 경제 대화, Mily",
+  "onboarding_catchphrase": "미루지 않는 경제 대화, Mily",
+  "onboarding_headline": "돈 얘기가 대화가 되는 순간",
+  "onboarding_sub": "용돈 협상부터 소비 회고까지, 가족이 함께해요",
+  "onboarding_cta": "함께 시작해요",
 
   "onboarding_role_title": "어떻게 사용하실 건가요?",
   "onboarding_role_individual": "나 혼자",
@@ -10,7 +14,7 @@
   "onboarding_plan_budget_label": "월간 총 예산",
   "onboarding_plan_budget_placeholder": "예산을 입력해주세요",
   "onboarding_plan_next": "다음",
-  "onboarding_plan_done": "시작하기",
+  "onboarding_plan_done": "함께 시작해요",
   "onboarding_child_invite_title": "부모님이 보내준 초대 코드를 입력해주세요",
   "onboarding_child_invite_placeholder": "초대 코드 6자리",
   "onboarding_child_name_label": "이름",

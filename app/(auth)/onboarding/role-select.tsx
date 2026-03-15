@@ -31,6 +31,12 @@ export default function RoleSelectScreen() {
   return (
     <ScreenLayout>
       <View style={styles.container}>
+        <View style={styles.heroSection}>
+          <Text style={styles.catchphrase}>{t('onboarding_catchphrase')}</Text>
+          <Text style={styles.headline}>{t('onboarding_headline')}</Text>
+          <Text style={styles.sub}>{t('onboarding_sub')}</Text>
+        </View>
+
         <Text style={styles.title}>{t('onboarding_role_title')}</Text>
 
         <Card style={styles.card}>
@@ -70,12 +76,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: theme.spacing[4],
   },
-  title: {
-    fontSize: 24,
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: theme.spacing[8],
+  },
+  catchphrase: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    letterSpacing: 0.5,
+    marginBottom: theme.spacing[3],
+  },
+  headline: {
+    fontSize: 26,
     fontWeight: '700',
     color: theme.colors.textPrimary,
     textAlign: 'center',
-    marginBottom: theme.spacing[7],
+    lineHeight: 34,
+    marginBottom: theme.spacing[3],
+  },
+  sub: {
+    fontSize: 15,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: theme.spacing[4],
   },
   card: {
     marginBottom: theme.spacing[4],
