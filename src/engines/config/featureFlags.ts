@@ -12,6 +12,16 @@ export const FeatureFlags = {
   MAINTENANCE_MODE: 'maintenance_mode',
   FORCE_UPDATE_REQUIRED: 'force_update_required',
   MIN_APP_VERSION: 'min_app_version',
+
+  // 성년 전환 (Feature 3)
+  GRADUATION_CELEBRATION_ENABLED: 'graduation_celebration_enabled',
+  GRADUATION_COUPON_ENABLED: 'graduation_coupon_enabled',
+  GRADUATION_COUPON_VALUE: 'graduation_coupon_value',
+
+  // 기능 5~6
+  SMART_BUDGET_ENABLED: 'smart_budget_enabled',
+  DAILY_CHECKIN_ENABLED: 'daily_checkin_enabled',
+  MONTHLY_RECONCILE_ENABLED: 'monthly_reconcile_enabled',
 } as const;
 
 export type FeatureFlagKey = keyof typeof FeatureFlags;
@@ -27,4 +37,12 @@ export const DEFAULT_FLAGS: Record<string, boolean | string> = {
   maintenance_mode: false,
   force_update_required: false,
   min_app_version: '1.0.0',
+  // 성년 전환
+  graduation_celebration_enabled: true,
+  graduation_coupon_enabled: false,
+  graduation_coupon_value: 5000,
+  // 기능 5~6
+  smart_budget_enabled: true,
+  daily_checkin_enabled: true,
+  monthly_reconcile_enabled: true,
 };

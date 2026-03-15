@@ -337,6 +337,39 @@ export const ACHIEVEMENTS: Achievement[] = [
     hint: null,
     condition: (ctx) => ctx.todayCheckInAmounts.some((a) => a === 7777),
   },
+
+  // ─── H. 마일스톤 — 성년 전환 (graduation) ───
+
+  {
+    id: 'graduation_achieved',
+    category: 'milestone',
+    title: '어른이 됐어요!',
+    description: 'Mily와 함께 성장해서 성인이 되었어요. 앞으로도 함께해요.',
+    rarity: 'epic',
+    isHidden: false,
+    hint: '성년 전환 완료',
+    condition: (ctx) => ctx.unlockedAchievements.includes('graduation_achieved'),
+  },
+  {
+    id: 'graduation_journey',
+    category: 'milestone',
+    title: '함께한 시간',
+    description: '가족과 24주 이상 함께 계획하고 기록했어요.',
+    rarity: 'rare',
+    isHidden: false,
+    hint: '가족 연결 + 24주 이상',
+    condition: (ctx) => ctx.familyLinked && ctx.consecutiveWeeks >= 24,
+  },
+  {
+    id: 'graduation_planner',
+    category: 'milestone',
+    title: '내 예산, 내가 정해요',
+    description: '성인으로 전환 후 첫 번째 예산 계획을 만들었어요.',
+    rarity: 'uncommon',
+    isHidden: false,
+    hint: '성년 전환 후 계획 1회 생성',
+    condition: (ctx) => ctx.unlockedAchievements.includes('graduation_planner'),
+  },
 ];
 
 // 카테고리별 필터 헬퍼
