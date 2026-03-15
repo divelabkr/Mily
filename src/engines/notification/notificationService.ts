@@ -108,6 +108,27 @@ async function cancelNotificationByType(type: string): Promise<void> {
 }
 
 // ──────────────────────────────────────────────
+// 자녀 고정비 업데이트 알림 (부모 설정 시)
+// ──────────────────────────────────────────────
+
+export async function notifyChildFixedCostUpdated(
+  _childUid: string,
+  categoryName: string,
+  amount: number
+): Promise<void> {
+  if (!(await requestNotificationPermission())) return;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '📚 Mily에서 고정비가 업데이트됐어요',
+      body: `${categoryName} ${amount.toLocaleString()}원이 설정됐어요`,
+      data: { type: 'child_fixed_cost_updated' },
+    },
+    trigger: null,
+  });
+}
+
+// ──────────────────────────────────────────────
 // 쿠폰 수신 알림 — 자녀에게 직접 발송 (앱 내 전용)
 // 모든 문구 "Mily"로 통일, 운영자 이름 노출 금지
 // ──────────────────────────────────────────────
