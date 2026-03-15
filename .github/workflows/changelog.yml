@@ -3,7 +3,7 @@ name: Auto Changelog
 on:
   push:
     branches:
-      - master
+      - main
 
 # [skip ci] 커밋이 이 워크플로우를 재트리거하지 않도록
 # GitHub Actions는 [skip ci] 태그를 자동으로 인식하여 실행 건너뜀
