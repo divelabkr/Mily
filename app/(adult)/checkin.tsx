@@ -33,6 +33,13 @@ import { calculateBoundary } from '../../src/engines/checkin/planBoundary';
 import { useAuthStore } from '../../src/engines/auth/authStore';
 import { getWeekId } from '../../src/utils/dateUtils';
 import { formatCurrency } from '../../src/utils/formatCurrency';
+import {
+  CheckInMode,
+  CHECKIN_MODE_OPTIONS,
+  loadCheckInMode,
+  saveCheckInMode,
+  getFieldsForMode,
+} from '../../src/engines/checkin/checkinModeService';
 
 const SPEND_TYPE_OPTIONS: { type: SpendType; labelKey: string }[] = [
   { type: 'fixed', labelKey: 'checkin_spend_type_fixed' },
@@ -55,6 +62,7 @@ export default function CheckInScreen() {
   const plan = usePlanStore((s) => s.currentPlan);
   const checkIns = useCheckInStore((s) => s.weeklyCheckIns);
 
+  const [mode, setMode] = useState<CheckInMode>('standard');
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('food');
   const [selectedSpendType, setSelectedSpendType] = useState<SpendType | null>(null);
@@ -65,11 +73,23 @@ export default function CheckInScreen() {
   const [pendingSave, setPendingSave] = useState<(() => void) | null>(null);
   const [recentSuggestions, setRecentSuggestions] = useState<CheckIn[]>([]);
 
+  // AsyncStorage에서 저장된 모드 로드
+  useEffect(() => {
+    loadCheckInMode().then(setMode);
+  }, []);
+
+  const handleModeChange = (newMode: CheckInMode) => {
+    setMode(newMode);
+    saveCheckInMode(newMode);
+  };
+
   // 이번 주 기록이 없을 때 지난주 기록 로드
   useEffect(() => {
     if (!user || checkIns.length > 0) return;
     loadRecentSuggestions(user.uid).then(setRecentSuggestions);
   }, [user, checkIns.length]);
+
+  const fields = getFieldsForMode(mode);
 
   const applyRecentSuggestion = (item: CheckIn) => {
     setAmount(String(item.amount));
@@ -134,6 +154,32 @@ export default function CheckInScreen() {
     <ScreenLayout>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>{t('checkin_title')}</Text>
+
+        {/* 체크인 모드 선택 */}
+        <View style={styles.modeSelector}>
+          {CHECKIN_MODE_OPTIONS.map((opt) => (
+            <TouchableOpacity
+              key={opt.mode}
+              style={[
+                styles.modeChip,
+                mode === opt.mode && styles.modeChipSelected,
+              ]}
+              onPress={() => handleModeChange(opt.mode)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: mode === opt.mode }}
+              accessibilityLabel={`${opt.label} 모드: ${opt.desc}`}
+            >
+              <Text
+                style={[
+                  styles.modeChipLabel,
+                  mode === opt.mode && styles.modeChipLabelSelected,
+                ]}
+              >
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* 지난번처럼 — 이번 주 기록이 없을 때만 표시 */}
         {recentSuggestions.length > 0 && checkIns.length === 0 && (
@@ -207,65 +253,75 @@ export default function CheckInScreen() {
           ))}
         </View>
 
-        <Text style={styles.label}>{t('checkin_spend_type_label')}</Text>
-        <View style={styles.spendTypeRow}>
-          {SPEND_TYPE_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt.type}
-              style={[
-                styles.spendTypeChip,
-                selectedSpendType === opt.type && styles.spendTypeChipSelected,
-              ]}
-              onPress={() =>
-                setSelectedSpendType(selectedSpendType === opt.type ? null : opt.type)
-              }
-              accessibilityLabel={t(opt.labelKey)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: selectedSpendType === opt.type }}
-            >
-              <Text
-                style={[
-                  styles.spendTypeLabel,
-                  selectedSpendType === opt.type && styles.spendTypeLabelSelected,
-                ]}
-              >
-                {t(opt.labelKey)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {fields.showSpendType && (
+          <>
+            <Text style={styles.label}>{t('checkin_spend_type_label')}</Text>
+            <View style={styles.spendTypeRow}>
+              {SPEND_TYPE_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.type}
+                  style={[
+                    styles.spendTypeChip,
+                    selectedSpendType === opt.type && styles.spendTypeChipSelected,
+                  ]}
+                  onPress={() =>
+                    setSelectedSpendType(selectedSpendType === opt.type ? null : opt.type)
+                  }
+                  accessibilityLabel={t(opt.labelKey)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedSpendType === opt.type }}
+                >
+                  <Text
+                    style={[
+                      styles.spendTypeLabel,
+                      selectedSpendType === opt.type && styles.spendTypeLabelSelected,
+                    ]}
+                  >
+                    {t(opt.labelKey)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
-        <Text style={styles.label}>{t('checkin_emotion_label')}</Text>
-        <View style={styles.emotionRow}>
-          {EMOTION_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt.tag}
-              style={[
-                styles.emotionChip,
-                selectedEmotion === opt.tag && styles.emotionChipSelected,
-              ]}
-              onPress={() =>
-                setSelectedEmotion(selectedEmotion === opt.tag ? null : opt.tag)
-              }
-              accessibilityLabel={t(opt.labelKey)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: selectedEmotion === opt.tag }}
-            >
-              <Text style={styles.emotionEmoji}>{opt.emoji}</Text>
-              <Text style={styles.emotionLabel}>{t(opt.labelKey)}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {fields.showEmotion && (
+          <>
+            <Text style={styles.label}>{t('checkin_emotion_label')}</Text>
+            <View style={styles.emotionRow}>
+              {EMOTION_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.tag}
+                  style={[
+                    styles.emotionChip,
+                    selectedEmotion === opt.tag && styles.emotionChipSelected,
+                  ]}
+                  onPress={() =>
+                    setSelectedEmotion(selectedEmotion === opt.tag ? null : opt.tag)
+                  }
+                  accessibilityLabel={t(opt.labelKey)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedEmotion === opt.tag }}
+                >
+                  <Text style={styles.emotionEmoji}>{opt.emoji}</Text>
+                  <Text style={styles.emotionLabel}>{t(opt.labelKey)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
-        <TextInput
-          style={styles.memoInput}
-          placeholder={t('checkin_memo_placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          value={memo}
-          onChangeText={setMemo}
-          multiline
-          accessibilityLabel={t('checkin_memo_placeholder')}
-        />
+        {fields.showMemo && (
+          <TextInput
+            style={styles.memoInput}
+            placeholder={t('checkin_memo_placeholder')}
+            placeholderTextColor={theme.colors.textSecondary}
+            value={memo}
+            onChangeText={setMemo}
+            multiline
+            accessibilityLabel={t('checkin_memo_placeholder')}
+          />
+        )}
 
         {similarMessage && (
           <Card style={styles.boundaryCard}>
@@ -470,5 +526,33 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: theme.spacing[4],
+  },
+  modeSelector: {
+    flexDirection: 'row',
+    gap: theme.spacing[2],
+    marginBottom: theme.spacing[5],
+  },
+  modeChip: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: theme.spacing[2],
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  modeChipSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: '#EDF2F9',
+  },
+  modeChipLabel: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  modeChipLabelSelected: {
+    color: theme.colors.primary,
+    fontWeight: '700',
   },
 });

@@ -22,6 +22,9 @@ export const FeatureFlags = {
   SMART_BUDGET_ENABLED: 'smart_budget_enabled',
   DAILY_CHECKIN_ENABLED: 'daily_checkin_enabled',
   MONTHLY_RECONCILE_ENABLED: 'monthly_reconcile_enabled',
+
+  // 체크인 모드
+  DAILY_CHECKIN_DEFAULT_MODE: 'daily_checkin_default_mode',
 } as const;
 
 export type FeatureFlagKey = keyof typeof FeatureFlags;
@@ -45,4 +48,7 @@ export const DEFAULT_FLAGS: Record<string, boolean | string> = {
   smart_budget_enabled: true,
   daily_checkin_enabled: true,
   monthly_reconcile_enabled: true,
+
+  // 체크인 모드 기본값
+  daily_checkin_default_mode: 'standard',
 };
