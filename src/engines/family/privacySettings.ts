@@ -2,11 +2,15 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { getFirebaseDb } from '../../lib/firebase';
 import { CategoryId } from '../plan/defaultCategories';
 
+export type ShareMode = 'total_only' | 'categories_only' | 'full';
+
 export interface PrivacySettings {
   childUid: string;
   familyId: string;
   sharedCategories: CategoryId[];
   shareReview: boolean;
+  shareMode: ShareMode;          // 총액만 / 카테고리별 / 전체
+  shareExpiresAt: number | null; // null=영구. 설정 시 7일 후 만료.
 }
 
 // 기본값: 전부 off. 자녀가 켜야 부모에게 보임.
@@ -19,6 +23,8 @@ export function defaultPrivacySettings(
     familyId,
     sharedCategories: [],
     shareReview: false,
+    shareMode: 'total_only',
+    shareExpiresAt: null,
   };
 }
 
