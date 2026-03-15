@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,13 @@ import { evaluatePaywallTrigger } from '../../src/engines/billing/paywallTrigger
 import { Events } from '../../src/engines/analytics/analyticsService';
 import type { WeeklyReviewOutput } from '../../src/engines/ai/prompts/weeklyReview';
 import { DEFAULT_CATEGORIES } from '../../src/engines/plan/defaultCategories';
+import {
+  getMonthlySnapshot,
+  getPrevMonthId,
+  getAdherenceSummary,
+  type MonthlyReconcile,
+} from '../../src/engines/review/reconcileService';
+import { formatCurrency } from '../../src/utils/formatCurrency';
 
 export default function ReviewScreen() {
   const { t } = useTranslation();
@@ -36,6 +43,19 @@ export default function ReviewScreen() {
   const [aiUsed, setAiUsed] = useState(false);
   const [smallWin, setSmallWin] = useState<string | null>(null);
   const [promiseKept, setPromiseKept] = useState<boolean | null>(null);
+  const [prevMonthReconcile, setPrevMonthReconcile] = useState<MonthlyReconcile | null>(null);
+
+  // 이전 달 정산 스냅샷 로드 (월초에만 표시)
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date();
+    if (today.getDate() <= 7) { // 월초 7일간 이전 달 정산 표시
+      const prevMonthId = getPrevMonthId(today);
+      getMonthlySnapshot(user.uid, prevMonthId)
+        .then(setPrevMonthReconcile)
+        .catch(() => {});
+    }
+  }, [user?.uid]);
 
   if (checkIns.length === 0) {
     return (
@@ -208,6 +228,42 @@ export default function ReviewScreen() {
             })}
           </Card>
         )}
+        {/* 이전 달 월간 정산 (월초 7일간 표시) */}
+        {prevMonthReconcile && (
+          <Card style={styles.card}>
+            <Text style={styles.sliderTitle}>
+              📊 {prevMonthReconcile.monthId} 월간 정산
+            </Text>
+            <Text style={styles.reconcileSummary}>
+              {getAdherenceSummary(prevMonthReconcile)}
+            </Text>
+            <View style={styles.reconcileRow}>
+              <Text style={styles.reconcileLabel}>계획</Text>
+              <Text style={styles.reconcileValue}>
+                {formatCurrency(prevMonthReconcile.totalPlanned)}
+              </Text>
+            </View>
+            <View style={styles.reconcileRow}>
+              <Text style={styles.reconcileLabel}>실제 지출</Text>
+              <Text style={styles.reconcileValue}>
+                {formatCurrency(prevMonthReconcile.totalActual)}
+              </Text>
+            </View>
+            <View style={styles.reconcileRow}>
+              <Text style={styles.reconcileLabel}>선택소비</Text>
+              <Text style={[styles.reconcileValue, styles.reconcileChoiceValue]}>
+                {formatCurrency(prevMonthReconcile.choiceActual)}
+              </Text>
+            </View>
+            <View style={styles.reconcileRow}>
+              <Text style={styles.reconcileLabel}>기록 수</Text>
+              <Text style={styles.reconcileValue}>
+                {prevMonthReconcile.checkInCount}건
+              </Text>
+            </View>
+          </Card>
+        )}
+
         {/* AI 면책 고지 — 하단 고정 */}
         {review && (
           <Text style={styles.aiDisclaimer}>
@@ -286,6 +342,31 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: theme.spacing[4],
+  },
+  reconcileSummary: {
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing[3],
+    lineHeight: 20,
+  },
+  reconcileRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing[2],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  reconcileLabel: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  reconcileValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+  },
+  reconcileChoiceValue: {
+    color: theme.colors.primary,
   },
   aiDisclaimer: {
     fontSize: 11,

@@ -18,6 +18,11 @@ import {
   getTodaySummary,
   type DailySummary,
 } from '../../src/engines/checkin/dailySummaryService';
+import {
+  getMonthlySnapshot,
+  getPrevMonthId,
+  type MonthlyReconcile,
+} from '../../src/engines/review/reconcileService';
 import { getWeekId } from '../../src/utils/dateUtils';
 import { formatCurrency } from '../../src/utils/formatCurrency';
 import { usePraiseCardStore } from '../../src/engines/praiseCard/praiseCardStore';
@@ -46,6 +51,7 @@ export default function ChildHomeScreen() {
   ).length;
 
   const [todaySummary, setTodaySummary] = useState<DailySummary | null>(null);
+  const [prevMonthReconcile, setPrevMonthReconcile] = useState<MonthlyReconcile | null>(null);
 
   useEffect(() => {
     if (user?.familyId) {
@@ -65,6 +71,17 @@ export default function ChildHomeScreen() {
     if (!user) return;
     getTodaySummary(user.uid, getWeekId()).then(setTodaySummary).catch(() => {});
   }, [user?.uid, checkIns.length]);
+
+  // 이전 달 월간 정산 (월초 7일간 표시)
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date();
+    if (today.getDate() <= 7) {
+      getMonthlySnapshot(user.uid, getPrevMonthId(today))
+        .then(setPrevMonthReconcile)
+        .catch(() => {});
+    }
+  }, [user?.uid]);
 
   // 이번 주(최근 7일) 받은 칭찬 카드만 표시
   const recentPraise = praiseCards.filter(
@@ -121,6 +138,19 @@ export default function ChildHomeScreen() {
                 {todaySummary.checkInCount}건 기록됨
               </Text>
             )}
+          </Card>
+        )}
+
+        {/* 이전 달 월간 정산 카드 (월초 7일간) */}
+        {prevMonthReconcile && (
+          <Card style={styles.monthlyCard}>
+            <Text style={styles.monthlyLabel}>
+              📊 {prevMonthReconcile.monthId} 돌아보기
+            </Text>
+            <Text style={styles.monthlyAmount}>
+              {formatCurrency(prevMonthReconcile.choiceActual)}
+            </Text>
+            <Text style={styles.monthlyHint}>선택소비 합계</Text>
           </Card>
         )}
       </View>
@@ -205,6 +235,27 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
   },
   dailyCount: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+  },
+  monthlyCard: {
+    marginTop: theme.spacing[3],
+    alignItems: 'center',
+    gap: theme.spacing[1],
+    backgroundColor: '#F5F0FF',
+    borderColor: theme.colors.accent,
+    borderWidth: 1,
+  },
+  monthlyLabel: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+  },
+  monthlyAmount: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.accent,
+  },
+  monthlyHint: {
     fontSize: 12,
     color: theme.colors.textSecondary,
   },
