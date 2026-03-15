@@ -25,6 +25,12 @@ import {
   sendRequestCard,
   loadRequestCards,
 } from '../../src/engines/requestCard/requestCardService';
+import { PurchaseCoolingSheet } from '../../src/ui/components/PurchaseCoolingSheet';
+import {
+  type CoolingAnswers,
+  buildCoolingContext,
+  trackCoolingCompleted,
+} from '../../src/engines/requestCard/coolingService';
 
 const REQUEST_TYPE_KEYS: {
   type: RequestType;
@@ -54,6 +60,7 @@ export default function ChildRequestScreen() {
   const cards = useRequestCardStore((s) => s.cards);
 
   const [showForm, setShowForm] = useState(false);
+  const [showCooling, setShowCooling] = useState(false);
   const [requestText, setRequestText] = useState('');
   const [requestType, setRequestType] = useState<RequestType>('extra_budget');
   const [sending, setSending] = useState(false);
@@ -70,8 +77,8 @@ export default function ChildRequestScreen() {
   const isUrgent = requestType === 'urgent';
   const canSend = requestText.trim().length > 0;
 
-  const handleSend = async () => {
-    if (!user || !family || !canSend) return;
+  const doSendCard = async (text: string) => {
+    if (!user || !family) return;
     const parentUid = family.members.find((m) => m.role === 'parent')?.uid;
     if (!parentUid) return;
 
@@ -81,7 +88,7 @@ export default function ChildRequestScreen() {
         family.familyId,
         user.uid,
         parentUid,
-        requestText.trim(),
+        text,
         requestType,
         user.displayName
       );
@@ -91,6 +98,32 @@ export default function ChildRequestScreen() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSend = async () => {
+    if (!canSend) return;
+    // purchase_check → 냉각 장치 먼저
+    if (requestType === 'purchase_check') {
+      setShowCooling(true);
+      return;
+    }
+    await doSendCard(requestText.trim());
+  };
+
+  const handleCoolingComplete = async (answers: CoolingAnswers) => {
+    setShowCooling(false);
+    trackCoolingCompleted(answers, requestType);
+    const context = buildCoolingContext(answers);
+    const finalText = context
+      ? `${requestText.trim()}\n\n${context}`
+      : requestText.trim();
+    await doSendCard(finalText);
+  };
+
+  const handleCoolingSkip = async () => {
+    setShowCooling(false);
+    trackCoolingCompleted({ whyNeeded: '', urgency: 'now', alternatives: '', skipped: true }, requestType);
+    await doSendCard(requestText.trim());
   };
 
   if (!family) {
@@ -212,6 +245,13 @@ export default function ChildRequestScreen() {
           />
         </View>
       )}
+
+      <PurchaseCoolingSheet
+        visible={showCooling}
+        onComplete={handleCoolingComplete}
+        onSkip={handleCoolingSkip}
+        onClose={() => setShowCooling(false)}
+      />
     </ScreenLayout>
   );
 }
