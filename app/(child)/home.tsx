@@ -6,6 +6,7 @@ import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Card } from '../../src/ui/components/Card';
 import { Button } from '../../src/ui/components/Button';
 import { ProgressBar } from '../../src/ui/components/ProgressBar';
+import { GiftIcon } from '../../src/ui/components/CouponInbox';
 import { theme } from '../../src/ui/theme';
 import { usePlanStore } from '../../src/engines/plan/planStore';
 import { getWeeklyBudget } from '../../src/engines/plan/planService';
@@ -17,6 +18,8 @@ import { usePraiseCardStore } from '../../src/engines/praiseCard/praiseCardStore
 import { loadPraiseCards } from '../../src/engines/praiseCard/praiseCardService';
 import { useAuthStore } from '../../src/engines/auth/authStore';
 import { formatCurrency } from '../../src/utils/formatCurrency';
+import { useRewardStore } from '../../src/engines/reward/rewardStore';
+import { getCoupons, checkAndExpireCoupons } from '../../src/engines/reward/rewardService';
 
 const PRAISE_EMOJI: Record<string, string> = {
   well_saved: '🌟',
@@ -31,12 +34,24 @@ export default function ChildHomeScreen() {
   const plan = usePlanStore((s) => s.currentPlan);
   const checkIns = useCheckInStore((s) => s.weeklyCheckIns);
   const praiseCards = usePraiseCardStore((s) => s.cards);
+  const setCoupons = useRewardStore((s) => s.setCoupons);
+  const rewardCoupons = useRewardStore((s) => s.coupons);
+  const activeCouponCount = rewardCoupons.filter(
+    (c) => c.status === 'active' && c.isVisible
+  ).length;
 
   useEffect(() => {
     if (user?.familyId) {
       loadPraiseCards(user.familyId);
     }
   }, [user?.familyId]);
+
+  // 만료 쿠폰 처리 + 쿠폰 목록 로드
+  useEffect(() => {
+    if (!user) return;
+    checkAndExpireCoupons(user.uid).catch(() => {});
+    getCoupons(user.uid).then(setCoupons).catch(() => {});
+  }, [user?.uid]);
 
   // 이번 주(최근 7일) 받은 칭찬 카드만 표시
   const recentPraise = praiseCards.filter(
@@ -51,7 +66,13 @@ export default function ChildHomeScreen() {
   return (
     <ScreenLayout>
       <View style={styles.container}>
-        <Text style={styles.greeting}>{t('child_home_doing_great')}</Text>
+        {/* 헤더: 인사말 + 선물함 아이콘 (활성 쿠폰 있을 때만 표시) */}
+        <View style={styles.headerRow}>
+          <Text style={styles.greeting}>{t('child_home_doing_great')}</Text>
+          {user && (
+            <GiftIcon uid={user.uid} activeCount={activeCouponCount} />
+          )}
+        </View>
 
         {/* 칭찬 카드 알림 */}
         {recentPraise.length > 0 && (
@@ -93,11 +114,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: theme.spacing[6],
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing[5],
+  },
   greeting: {
     fontSize: 24,
     fontWeight: '700',
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing[5],
   },
   card: {
     alignItems: 'center',

@@ -8,7 +8,10 @@ import { Button } from '../../src/ui/components/Button';
 import { ProgressBar } from '../../src/ui/components/ProgressBar';
 import { EmptyState } from '../../src/ui/components/EmptyState';
 import { AchievementUnlockPopup } from '../../src/ui/components/AchievementUnlockPopup';
+import { GiftIcon } from '../../src/ui/components/CouponInbox';
 import { theme } from '../../src/ui/theme';
+import { useRewardStore } from '../../src/engines/reward/rewardStore';
+import { hasActiveCoupons, getCoupons, checkAndExpireCoupons } from '../../src/engines/reward/rewardService';
 import { usePlanStore } from '../../src/engines/plan/planStore';
 import { getWeeklyBudget, loadLatestPlan } from '../../src/engines/plan/planService';
 import { getHomeCtaType } from '../../src/engines/plan/homeCtaLogic';
@@ -43,10 +46,19 @@ export default function HomeScreen() {
     statsMap,
   } = useAchievementStore();
 
+  const setCoupons = useRewardStore((s) => s.setCoupons);
+  const rewardCoupons = useRewardStore((s) => s.coupons);
+  const activeCouponCount = rewardCoupons.filter(
+    (c) => c.status === 'active' && c.isVisible
+  ).length;
+
   useEffect(() => {
     if (!user) return;
     loadLatestPlan(user.uid);
     loadWeeklyCheckIns(user.uid);
+    // 만료 쿠폰 처리 + 쿠폰 목록 로드
+    checkAndExpireCoupons(user.uid).catch(() => {});
+    getCoupons(user.uid).then(setCoupons).catch(() => {});
   }, [user?.uid]);
 
   // 최소 컨텍스트 — 홈에서 이용 가능한 데이터만
@@ -115,7 +127,13 @@ export default function HomeScreen() {
   return (
     <ScreenLayout>
       <View style={styles.container}>
-        <Text style={styles.title}>{t('home_title')}</Text>
+        {/* 헤더: 타이틀 + 선물함 아이콘 (활성 쿠폰 있을 때만 표시) */}
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>{t('home_title')}</Text>
+          {user && (
+            <GiftIcon uid={user.uid} activeCount={activeCouponCount} />
+          )}
+        </View>
 
         <Card style={styles.summaryCard}>
           {/* 선택소비 메인 — CLAUDE.md: 고정비 제외 선택소비 우선 */}
@@ -224,11 +242,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: theme.spacing[6],
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing[5],
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing[5],
   },
   summaryCard: {
     marginBottom: theme.spacing[4],

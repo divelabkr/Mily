@@ -12,11 +12,15 @@ import {
   loadPrivacySettings,
   savePrivacySettings,
 } from '../../src/engines/family/privacySettings';
+import { useRewardStore } from '../../src/engines/reward/rewardStore';
+import { getRewardSettings, updateRewardSettings } from '../../src/engines/reward/rewardService';
 
 export default function ChildMeScreen() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const [privacy, setPrivacy] = useState<PrivacySettings | null>(null);
+  const rewardSettings = useRewardStore((s) => s.rewardSettings);
+  const updateSettingsStore = useRewardStore((s) => s.updateSettings);
 
   useEffect(() => {
     if (user?.uid && user?.familyId) {
@@ -25,6 +29,19 @@ export default function ChildMeScreen() {
       setPrivacy(defaultPrivacySettings(user.uid, ''));
     }
   }, [user]);
+
+  // 쿠폰 알림 설정 로드
+  useEffect(() => {
+    if (!user?.uid) return;
+    getRewardSettings(user.uid).then(updateSettingsStore).catch(() => {});
+  }, [user?.uid]);
+
+  const handleNotifyParentToggle = async (value: boolean) => {
+    if (!user?.uid) return;
+    const updated = { notifyParentOnCoupon: value };
+    updateSettingsStore(updated);
+    await updateRewardSettings(user.uid, updated);
+  };
 
   const toggleCategory = async (categoryId: CategoryId) => {
     if (!privacy || !user) return;
@@ -89,6 +106,25 @@ export default function ChildMeScreen() {
           </View>
         </Card>
 
+        {/* 🎁 선물 알림 설정 — 자녀가 결정 (역전된 프라이버시 원칙) */}
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle}>🎁 선물 알림 설정</Text>
+          <View style={styles.privacyRow}>
+            <View style={styles.settingTextWrapper}>
+              <Text style={styles.privacyLabel}>부모님께 선물 받은 거 알리기</Text>
+              <Text style={styles.settingHint}>ON이면 부모님도 함께 기뻐할 수 있어요 🎉</Text>
+            </View>
+            <Switch
+              value={rewardSettings.notifyParentOnCoupon}
+              onValueChange={handleNotifyParentToggle}
+              trackColor={{
+                false: theme.colors.border,
+                true: theme.colors.primary,
+              }}
+            />
+          </View>
+        </Card>
+
         <Text style={styles.disclaimer}>{t('not_financial_service')}</Text>
       </ScrollView>
     </ScreenLayout>
@@ -132,5 +168,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: theme.spacing[6],
     marginBottom: theme.spacing[6],
+  },
+  settingTextWrapper: {
+    flex: 1,
+    marginRight: theme.spacing[3],
+  },
+  settingHint: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
 });

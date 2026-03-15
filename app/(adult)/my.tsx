@@ -28,6 +28,9 @@ import { getToken, requestPermission } from '../../src/engines/notification/push
 import * as Clipboard from 'expo-clipboard';
 import type { UserRole } from '../../src/engines/auth/authStore';
 import type { PlanId } from '../../src/engines/billing/plans';
+import { sendCoupon, getEligibleUsers } from '../../src/engines/reward/rewardService';
+import type { CouponBrand, CouponValue } from '../../src/engines/reward/rewardTypes';
+import { TextInput } from 'react-native';
 
 // 역할 표시 레이블
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -49,6 +52,18 @@ export default function MyScreen() {
   const [deleteStep, setDeleteStep] = useState(0); // 0=숨김, 1=확인1, 2=확인2, 3=삭제중
   const [leaveLoading, setLeaveLoading] = useState(false);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
+
+  // ── 쿠폰 발송 (마스터 전용) ──
+  const [couponTargetUid, setCouponTargetUid] = useState('');
+  const [couponBrand, setCouponBrand] = useState<CouponBrand>('스타벅스');
+  const [couponValue, setCouponValue] = useState<CouponValue>(5000);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponMessage, setCouponMessage] = useState(
+    '약속을 잘 지켜줬어요! Mily가 보내는 작은 선물이에요 🎁'
+  );
+  const [eligibleUsers, setEligibleUsers] = useState<string[] | null>(null);
+  const [eligibleLoading, setEligibleLoading] = useState(false);
+  const [couponSending, setCouponSending] = useState(false);
 
   useEffect(() => {
     posthogScreen('MyTab');
@@ -128,6 +143,55 @@ export default function MyScreen() {
     const next = !configFlags[FeatureFlags.MAINTENANCE_MODE];
     setConfigFlag(FeatureFlags.MAINTENANCE_MODE, next);
     capture('dev_tools_maintenance_toggle', { value: next });
+  };
+
+  // ── 쿠폰 핸들러 ──
+  const handleFetchEligible = async () => {
+    setEligibleLoading(true);
+    try {
+      const uids = await getEligibleUsers();
+      setEligibleUsers(uids);
+    } catch {
+      Alert.alert('오류', '조건 충족 유저 조회에 실패했습니다.');
+    } finally {
+      setEligibleLoading(false);
+    }
+  };
+
+  const handleSendCoupon = async () => {
+    if (!couponTargetUid.trim()) {
+      Alert.alert('오류', '유저 UID를 입력해주세요.');
+      return;
+    }
+    if (!couponCode.trim()) {
+      Alert.alert('오류', '쿠폰 코드를 입력해주세요.');
+      return;
+    }
+    setCouponSending(true);
+    try {
+      await sendCoupon(couponTargetUid.trim(), {
+        title: '🎁 Mily 깜짝 선물',
+        description: couponMessage,
+        couponCode: couponCode.trim(),
+        brand: couponBrand,
+        value: couponValue,
+        recipientUid: couponTargetUid.trim(),
+        isMinor: true, // 마스터 UI에서는 isMinor=true로 기본 처리 (자녀 대상)
+        sentAt: new Date(),
+      });
+      Alert.alert('발송 완료', `${couponBrand} ${couponValue.toLocaleString()}원 쿠폰이 발송됐습니다.`);
+      setCouponTargetUid('');
+      setCouponCode('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '발송 실패';
+      if (message.includes('미충족')) {
+        Alert.alert('발송 조건 미충족', '5개월 이상 / 이행률 90% / 활성 구독자 조건을 확인하세요.');
+      } else {
+        Alert.alert('오류', message);
+      }
+    } finally {
+      setCouponSending(false);
+    }
   };
 
   const handleCopyToken = async () => {
@@ -381,6 +445,117 @@ export default function MyScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* 🎁 쿠폰 발송 (마스터 전용) */}
+            <View style={styles.devBlock}>
+              <Text style={styles.devLabel}>🎁 쿠폰 발송</Text>
+
+              {/* 조건 충족 유저 조회 */}
+              <TouchableOpacity
+                style={styles.devActionButton}
+                onPress={handleFetchEligible}
+                disabled={eligibleLoading}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.devActionButtonText}>
+                  {eligibleLoading ? '조회 중...' : '조건 충족 유저 조회'}
+                </Text>
+              </TouchableOpacity>
+              {eligibleUsers !== null && (
+                <Text style={[styles.devFcmToken, { marginTop: 4 }]}>
+                  {eligibleUsers.length}명 충족
+                  {eligibleUsers.length > 0 ? `: ${eligibleUsers.slice(0, 2).join(', ')}${eligibleUsers.length > 2 ? ' ...' : ''}` : ''}
+                </Text>
+              )}
+
+              {/* 유저 UID 입력 */}
+              <TextInput
+                style={styles.devInput}
+                placeholder="유저 UID"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={couponTargetUid}
+                onChangeText={setCouponTargetUid}
+                autoCapitalize="none"
+              />
+
+              {/* 브랜드 선택 */}
+              <Text style={[styles.devFcmToken, { marginBottom: 4 }]}>브랜드</Text>
+              <View style={styles.devButtonRow}>
+                {(['스타벅스', 'CU', 'GS25', '기타'] as CouponBrand[]).map((b) => (
+                  <TouchableOpacity
+                    key={b}
+                    style={[
+                      styles.devRoleButton,
+                      couponBrand === b && styles.devRoleButtonActive,
+                    ]}
+                    onPress={() => setCouponBrand(b)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.devRoleButtonText,
+                      couponBrand === b && styles.devRoleButtonTextActive,
+                    ]}>
+                      {b}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* 금액 선택 */}
+              <Text style={[styles.devFcmToken, { marginBottom: 4, marginTop: 8 }]}>금액</Text>
+              <View style={styles.devButtonRow}>
+                {([2000, 3000, 5000] as CouponValue[]).map((v) => (
+                  <TouchableOpacity
+                    key={v}
+                    style={[
+                      styles.devRoleButton,
+                      couponValue === v && styles.devRoleButtonActive,
+                    ]}
+                    onPress={() => setCouponValue(v)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[
+                      styles.devRoleButtonText,
+                      couponValue === v && styles.devRoleButtonTextActive,
+                    ]}>
+                      {v.toLocaleString()}원
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* 쿠폰 코드 입력 */}
+              <TextInput
+                style={[styles.devInput, { marginTop: 8 }]}
+                placeholder="쿠폰 코드 (예: STBK-2025-ABCD)"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={couponCode}
+                onChangeText={setCouponCode}
+                autoCapitalize="characters"
+              />
+
+              {/* 메시지 입력 */}
+              <TextInput
+                style={[styles.devInput, { height: 64, textAlignVertical: 'top' }]}
+                placeholder="메시지"
+                placeholderTextColor={theme.colors.textSecondary}
+                value={couponMessage}
+                onChangeText={setCouponMessage}
+                multiline
+              />
+
+              {/* 발송 버튼 */}
+              <TouchableOpacity
+                style={[styles.devActionButton, couponSending && styles.devActionButtonActive]}
+                onPress={handleSendCoupon}
+                disabled={couponSending}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.devActionButtonText}>
+                  {couponSending ? '발송 중...' : '🎁 발송'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -583,6 +758,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   devButtonFlex: { flex: 1 },
+  devInput: {
+    backgroundColor: '#2a2a3e',
+    borderWidth: 1,
+    borderColor: '#4a4a6a',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: '#e2e8f0',
+    fontSize: 13,
+    marginTop: 6,
+    minHeight: 40,
+  },
   // ── 모달 ──
   modalOverlay: {
     flex: 1,

@@ -108,6 +108,48 @@ async function cancelNotificationByType(type: string): Promise<void> {
 }
 
 // ──────────────────────────────────────────────
+// 쿠폰 수신 알림 — 자녀에게 직접 발송 (앱 내 전용)
+// 모든 문구 "Mily"로 통일, 운영자 이름 노출 금지
+// ──────────────────────────────────────────────
+
+export async function notifyCouponReceived(
+  _recipientUid: string,
+  brand: string,
+  value: number
+): Promise<void> {
+  if (!(await requestNotificationPermission())) return;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '🎁 Mily가 깜짝 선물을 보냈어요!',
+      body: `${brand} ${value.toLocaleString()}원 쿠폰이 도착했어요`,
+      data: { type: 'coupon_received' },
+    },
+    trigger: null, // 즉시
+  });
+}
+
+// ──────────────────────────────────────────────
+// 부모 쿠폰 알림 — 자녀 설정 ON일 때만 발송
+// ──────────────────────────────────────────────
+
+export async function notifyParentCouponAlert(
+  _familyId: string,
+  _childUid: string
+): Promise<void> {
+  if (!(await requestNotificationPermission())) return;
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '🎁 자녀가 Mily에서 선물을 받았어요!',
+      body: '쿠폰함을 확인해보세요',
+      data: { type: 'parent_coupon_alert' },
+    },
+    trigger: null, // 즉시
+  });
+}
+
+// ──────────────────────────────────────────────
 // 알림 핸들러 초기화 (앱 시작 시)
 // ──────────────────────────────────────────────
 
