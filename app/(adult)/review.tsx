@@ -29,6 +29,15 @@ import {
   type MonthlyReconcile,
 } from '../../src/engines/review/reconcileService';
 import { formatCurrency } from '../../src/utils/formatCurrency';
+import {
+  getGoodMoments,
+  getPromiseFeedbackMessage,
+  trackPromiseKept,
+  trackPromiseMissed,
+  notifyParentPromiseKept,
+  type GoodMoment,
+} from '../../src/engines/review/promiseLoopService';
+import { getWeekId } from '../../src/utils/dateUtils';
 
 export default function ReviewScreen() {
   const { t } = useTranslation();
@@ -44,6 +53,16 @@ export default function ReviewScreen() {
   const [smallWin, setSmallWin] = useState<string | null>(null);
   const [promiseKept, setPromiseKept] = useState<boolean | null>(null);
   const [prevMonthReconcile, setPrevMonthReconcile] = useState<MonthlyReconcile | null>(null);
+  const [goodMoments, setGoodMoments] = useState<GoodMoment[]>([]);
+
+  // 이번 주 좋은 순간 로드
+  useEffect(() => {
+    if (!user) return;
+    const weekId = getWeekId();
+    getGoodMoments(user.uid, user.familyId ?? undefined, weekId)
+      .then(setGoodMoments)
+      .catch(() => {});
+  }, [user?.uid]);
 
   // 이전 달 정산 스냅샷 로드 (월초에만 표시)
   useEffect(() => {
@@ -84,11 +103,19 @@ export default function ReviewScreen() {
 
   const handleDone = async () => {
     if (!user) return;
-    const weekId = new Date().toISOString().slice(0, 10);
+    const weekId = getWeekId();
     if (review) {
       await saveReview(user.uid, review, aiUsed, promiseKept);
     }
     await Events.reviewCompleted(weekId, aiUsed, promiseKept);
+
+    // 약속 달성 트래킹 + 부모 알림
+    if (promiseKept === true && plan?.weeklyPromise) {
+      trackPromiseKept(weekId, plan.weeklyPromise);
+      await notifyParentPromiseKept(user.displayName ?? '자녀').catch(() => {});
+    } else if (promiseKept === false) {
+      trackPromiseMissed(weekId);
+    }
 
     // 다음 주 조정 저장
     if (plan) {
@@ -205,6 +232,27 @@ export default function ReviewScreen() {
         )}
 
         {smallWin && <SmallWinCard message={smallWin} />}
+
+        {/* 약속 달성 피드백 메시지 */}
+        {promiseKept !== null && (
+          <Card style={[styles.card, styles.promiseFeedbackCard]}>
+            <Text style={styles.promiseFeedbackText}>
+              {getPromiseFeedbackMessage(promiseKept)}
+            </Text>
+          </Card>
+        )}
+
+        {/* 이번 주 좋은 순간 */}
+        {goodMoments.length > 0 && (
+          <Card style={styles.card}>
+            <Text style={styles.sliderTitle}>✨ 이번 주 좋은 순간</Text>
+            {goodMoments.map((m, i) => (
+              <View key={i} style={styles.goodMomentRow}>
+                <Text style={styles.goodMomentText}>{m.description}</Text>
+              </View>
+            ))}
+          </Card>
+        )}
 
         {plan && (
           <Card style={styles.card}>
@@ -342,6 +390,27 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingVertical: theme.spacing[4],
+  },
+  promiseFeedbackCard: {
+    backgroundColor: '#F0FAF0',
+    borderColor: theme.colors.success,
+    borderWidth: 1,
+  },
+  promiseFeedbackText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
+  },
+  goodMomentRow: {
+    paddingVertical: theme.spacing[2],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  goodMomentText: {
+    fontSize: 14,
+    color: theme.colors.textPrimary,
+    lineHeight: 20,
   },
   reconcileSummary: {
     fontSize: 14,

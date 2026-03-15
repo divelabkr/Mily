@@ -19,6 +19,7 @@ interface StepMoodMemoProps {
   memo: string;
   onMoodChange: (mood: EmotionTag | null) => void;
   onMemoChange: (memo: string) => void;
+  weeklyPromise?: string | null;
 }
 
 export function StepMoodMemo({
@@ -26,12 +27,20 @@ export function StepMoodMemo({
   memo,
   onMoodChange,
   onMemoChange,
+  weeklyPromise,
 }: StepMoodMemoProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.stepLabel}>3 / 3</Text>
       <Text style={styles.title}>오늘 소비 기분은요?</Text>
       <Text style={styles.subtitle}>건너뛰어도 괜찮아요.</Text>
+
+      {!!weeklyPromise && (
+        <View style={styles.promiseBanner}>
+          <Text style={styles.promiseBannerLabel}>이번 주 약속</Text>
+          <Text style={styles.promiseBannerText}>{weeklyPromise}</Text>
+        </View>
+      )}
 
       <View style={styles.moodGrid}>
         {MOOD_OPTIONS.map((opt) => (
@@ -140,5 +149,21 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     textAlignVertical: 'top',
     minHeight: 80,
+  },
+  promiseBanner: {
+    backgroundColor: '#EDF2F9',
+    borderRadius: theme.borderRadius.input,
+    padding: theme.spacing[3],
+    marginBottom: theme.spacing[4],
+  },
+  promiseBannerLabel: {
+    fontSize: 11,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  promiseBannerText: {
+    fontSize: 13,
+    color: theme.colors.textPrimary,
   },
 });
