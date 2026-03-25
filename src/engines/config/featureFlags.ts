@@ -25,6 +25,28 @@ export const FeatureFlags = {
 
   // 체크인 모드
   DAILY_CHECKIN_DEFAULT_MODE: 'daily_checkin_default_mode',
+
+  // UX 개편
+  DRAWER_NAV_ENABLED: 'drawer_nav_enabled',
+  UNIFIED_CHECKIN_ENABLED: 'unified_checkin_enabled',
+
+  // 콘텐츠 엔진
+  REPORT_V2_ENABLED: 'report_v2_enabled',
+  GOAL_SIMULATOR_ENABLED: 'goal_simulator_enabled',
+  PROMISE_LOOP_ENABLED: 'promise_loop_enabled',
+
+  // 밀리의 밀리어네어
+  MILLIONAIRE_ENABLED: 'millionaire_enabled',
+  DREAM_SCENARIO_ENABLED: 'dream_scenario_enabled',
+
+  // 패밀리뱅크
+  FAMILY_BANK_ENABLED: 'family_bank_enabled',
+  TRUST_SCORE_ENABLED: 'trust_score_enabled',
+
+  // 캐시플로우
+  CASHFLOW_ENGINE_ENABLED: 'cashflow_engine_enabled',
+  LIFE_EVENTS_ENABLED: 'life_events_enabled',
+  FINANCIAL_STATEMENT_ENABLED: 'financial_statement_enabled',
 } as const;
 
 export type FeatureFlagKey = keyof typeof FeatureFlags;
@@ -51,4 +73,26 @@ export const DEFAULT_FLAGS: Record<string, boolean | string> = {
 
   // 체크인 모드 기본값
   daily_checkin_default_mode: 'standard',
+
+  // UX 개편
+  drawer_nav_enabled: false,
+  unified_checkin_enabled: false,
+
+  // 콘텐츠 엔진
+  report_v2_enabled: true,
+  goal_simulator_enabled: true,
+  promise_loop_enabled: true,
+
+  // 밀리의 밀리어네어
+  millionaire_enabled: false,
+  dream_scenario_enabled: false,
+
+  // 패밀리뱅크
+  family_bank_enabled: false,
+  trust_score_enabled: false,
+
+  // 캐시플로우
+  cashflow_engine_enabled: false,
+  life_events_enabled: false,
+  financial_statement_enabled: false,
 };

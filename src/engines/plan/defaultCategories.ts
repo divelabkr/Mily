@@ -1,4 +1,4 @@
-export type SpendType = 'fixed' | 'living' | 'choice';
+export type SpendType = 'fixed' | 'living' | 'choice' | 'give';
 
 export const DEFAULT_CATEGORIES = [
   { id: 'food',      label: '식음료', emoji: '🍚', defaultSpendType: 'living' as SpendType },
@@ -7,6 +7,7 @@ export const DEFAULT_CATEGORIES = [
   { id: 'social',    label: '모임',   emoji: '👫', defaultSpendType: 'choice' as SpendType },
   { id: 'savings',   label: '남기기', emoji: '💰', defaultSpendType: 'fixed'  as SpendType },
   { id: 'etc',       label: '기타',   emoji: '📦', defaultSpendType: 'choice' as SpendType },
+  { id: 'give',      label: '나눔',   emoji: '🎁', defaultSpendType: 'give'   as SpendType },
 ] as const;
 
 export type CategoryId = (typeof DEFAULT_CATEGORIES)[number]['id'];

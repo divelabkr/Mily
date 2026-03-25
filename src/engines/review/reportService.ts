@@ -15,6 +15,7 @@ import {
   buildReportUserMessage,
 } from './reportPrompts';
 import { getEconomyTip } from './economyTips';
+import { filterDna } from '../message/dnaFilter';
 
 const AI_TIMEOUT_MS = 10000;
 const AI_MODEL = 'claude-haiku-4-5-20251001';
@@ -148,6 +149,14 @@ export async function generateReport(input: ReportInput): Promise<ReportOutput> 
     }
 
     validateReportOutput(output);
+
+    // filterDna 통과 필수
+    const fullText = [output.headline, ...output.highlights, output.suggestion].join(' ');
+    const dnaResult = filterDna(fullText);
+    if (!dnaResult.passed) {
+      return buildFallbackReport(input);
+    }
+
     return output;
   } catch {
     return buildFallbackReport(input);
