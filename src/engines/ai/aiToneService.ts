@@ -32,6 +32,7 @@ export async function generateWeeklyReview(
   try {
     const client = createClient();
 
+    let timer: ReturnType<typeof setTimeout>;
     const response = await Promise.race([
       client.messages.create({
         model: AI_MODEL,
@@ -44,10 +45,10 @@ export async function generateWeeklyReview(
           },
         ],
       }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS)
-      ),
-    ]);
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS);
+      }),
+    ]).finally(() => clearTimeout(timer));
 
     const text =
       response.content[0].type === 'text' ? response.content[0].text : '';
@@ -68,6 +69,7 @@ export async function bufferRequestText(
   try {
     const client = createClient();
 
+    let timer2: ReturnType<typeof setTimeout>;
     const response = await Promise.race([
       client.messages.create({
         model: AI_MODEL,
@@ -80,10 +82,10 @@ export async function bufferRequestText(
           },
         ],
       }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS)
-      ),
-    ]);
+      new Promise<never>((_, reject) => {
+        timer2 = setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS);
+      }),
+    ]).finally(() => clearTimeout(timer2));
 
     const text =
       response.content[0].type === 'text' ? response.content[0].text : '';
