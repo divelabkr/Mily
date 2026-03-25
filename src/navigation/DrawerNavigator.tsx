@@ -28,31 +28,46 @@ export interface DrawerMenuItem {
   visible: boolean;
 }
 
+export interface FeatureFlagMap {
+  cashflow_engine_enabled?: boolean;
+  family_bank_enabled?: boolean;
+  millionaire_enabled?: boolean;
+  life_events_enabled?: boolean;
+  financial_statement_enabled?: boolean;
+}
+
 export function getAdultMenuItems(
   t: (key: string) => string,
   isParent: boolean,
-  requestBadge = 0
+  requestBadge = 0,
+  flags: FeatureFlagMap = {}
 ): DrawerMenuItem[] {
   return [
-    { key: 'home',        label: t('drawer_home'),        route: '/(adult)/home',    visible: true },
-    { key: 'report',      label: t('drawer_report'),      route: '/(adult)/review',  visible: true },
-    { key: 'plan',        label: t('drawer_plan'),        route: '/(adult)/plan',    visible: true },
+    { key: 'home',        label: t('drawer_home'),        route: '/(adult)/home',               visible: true },
+    { key: 'report',      label: t('drawer_report'),      route: '/(adult)/review',             visible: true },
+    { key: 'plan',        label: t('drawer_plan'),        route: '/(adult)/plan',               visible: true },
     { key: 'request',     label: t('drawer_request'),     route: '/(adult)/family',  badge: requestBadge, visible: isParent },
-    { key: 'achievement', label: t('drawer_achievement'), route: '/(adult)/my',      visible: true },
-    { key: 'family',      label: t('drawer_family'),      route: '/(adult)/family',  visible: isParent },
-    { key: 'settings',    label: t('drawer_settings'),    route: '/(adult)/my',      visible: true },
+    { key: 'achievement', label: t('drawer_achievement'), route: '/(adult)/my',                 visible: true },
+    { key: 'family',      label: t('drawer_family'),      route: '/(adult)/family',             visible: isParent },
+    { key: 'cashflow',    label: '💰 ' + t('drawer_cashflow'),    route: '/(adult)/cashflow',   visible: !!flags.cashflow_engine_enabled },
+    { key: 'familybank',  label: '🏦 ' + t('drawer_familybank'),  route: '/(adult)/familybank', visible: !!flags.family_bank_enabled },
+    { key: 'millionaire', label: '🏆 ' + t('drawer_millionaire'), route: '/(adult)/millionaire', visible: !!flags.millionaire_enabled },
+    { key: 'settings',    label: t('drawer_settings'),    route: '/(adult)/my',                 visible: true },
   ].filter((item) => item.visible);
 }
 
 export function getChildMenuItems(
-  t: (key: string) => string
+  t: (key: string) => string,
+  flags: FeatureFlagMap = {}
 ): DrawerMenuItem[] {
   return [
-    { key: 'home',        label: t('drawer_home'),        route: '/(child)/home',    visible: true },
-    { key: 'plan',        label: t('drawer_plan'),        route: '/(child)/plan',    visible: true },
-    { key: 'request',     label: t('drawer_request'),     route: '/(child)/request', visible: true },
-    { key: 'achievement', label: t('drawer_achievement'), route: '/(child)/me',      visible: true },
-    { key: 'privacy',     label: t('drawer_privacy'),     route: '/(child)/me',      visible: true },
+    { key: 'home',        label: t('drawer_home'),        route: '/(child)/home',        visible: true },
+    { key: 'plan',        label: t('drawer_plan'),        route: '/(child)/plan',        visible: true },
+    { key: 'request',     label: t('drawer_request'),     route: '/(child)/request',     visible: true },
+    { key: 'achievement', label: t('drawer_achievement'), route: '/(child)/me',          visible: true },
+    { key: 'dream',       label: '🎯 ' + t('drawer_dream'),       route: '/(child)/millionaire', visible: !!flags.millionaire_enabled },
+    { key: 'familybank',  label: '🏦 ' + t('drawer_familybank'),  route: '/(child)/familybank',  visible: !!flags.family_bank_enabled },
+    { key: 'privacy',     label: t('drawer_privacy'),     route: '/(child)/me',          visible: true },
   ].filter((item) => item.visible);
 }
 

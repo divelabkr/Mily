@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Mily - 가족 소비 회고",
+    "name": "Mily",
     "slug": "mily",
     "version": "1.0.0",
     "runtimeVersion": "1.0.0",
@@ -61,8 +61,8 @@
         "projectId": "mily"
       }
     },
-    "description": "미루지 않는 경제 대화, Mily. 용돈 협상부터 소비 회고까지, 가족이 함께하는 주 1회 5분 소비 회고 앱.",
-    "keywords": ["가계부", "소비", "가족", "회고", "예산", "청소년"],
+    "description": "미루지 않는 경제 대화, Mily",
+    "keywords": ["용돈", "가족", "경제교육", "소비", "저금", "습관", "코칭"],
     "primaryColor": "#F4A261",
     "owner": "mily-team"
   }

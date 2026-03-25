@@ -47,6 +47,7 @@ async function callHaiku(
   maxTokens = 256
 ): Promise<MessageOutput> {
   const client = createClient();
+  let timer: ReturnType<typeof setTimeout>;
   const response = await Promise.race([
     client.messages.create({
       model: AI_MODEL,
@@ -54,10 +55,10 @@ async function callHaiku(
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     }),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS)
-    ),
-  ]);
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS);
+    }),
+  ]).finally(() => clearTimeout(timer));
   const text =
     response.content[0].type === 'text' ? response.content[0].text : '';
   const parsed = JSON.parse(text) as MessageOutput;

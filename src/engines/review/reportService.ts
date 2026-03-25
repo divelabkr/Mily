@@ -114,6 +114,7 @@ export async function generateReport(input: ReportInput): Promise<ReportOutput> 
     const systemPrompt = getReportSystemPrompt(input.role, input.period);
     const userMessage = buildReportUserMessage(input);
 
+    let timer: ReturnType<typeof setTimeout>;
     const response = await Promise.race([
       client.messages.create({
         model: AI_MODEL,
@@ -121,10 +122,10 @@ export async function generateReport(input: ReportInput): Promise<ReportOutput> 
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS)
-      ),
-    ]);
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT_MS);
+      }),
+    ]).finally(() => clearTimeout(timer));
 
     const text =
       response.content[0].type === 'text' ? response.content[0].text : '';
