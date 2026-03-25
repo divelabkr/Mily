@@ -47,6 +47,22 @@ export interface AchievementContext {
   // 오늘 체크인 횟수 (엉뚱 업적용)
   todayCheckInCount: number;
   todayCheckInAmounts: number[];   // 오늘 체크인 금액 목록
+  // 추가 컨텍스트
+  praiseCardsReceived: number;     // 칭찬 카드 수신 횟수
+  giveCheckIns: number;            // 나눔 소비 체크인 횟수
+  daysSinceLastCheckIn: number;    // 마지막 체크인 이후 일수 (복귀 감지)
+  economyTipsViewed: number;       // 경제 상식 열람 횟수
+  dailyCheckInStreak: number;      // 일 연속 체크인 (7일 = 한 주 매일)
+  requestCardsResolved: number;    // 합의 완료된 요청 카드 수
+  // Bundle 3 추가 컨텍스트
+  savingsCheckIns: number;         // 저금(savings) 카테고리 체크인 횟수
+  choiceSpendDecreased: boolean;   // 선택소비 전주 대비 감소 여부
+  contractsCompleted: number;      // 가족 합의(약속) 완료 횟수
+  ageBandUpgraded: boolean;        // 밴드 업그레이드 여부
+  isGraduated: boolean;            // 성년 전환 완료 여부
+  freedomIndex: number;            // 자유 지수 (0~100, 래트레이스 기반)
+  familyBankCompleted: boolean;    // 패밀리뱅크 미션 전부 완료 여부
+  totalMilyXp: number;             // 밀리 경험치 총합
 }
 
 export interface Achievement {

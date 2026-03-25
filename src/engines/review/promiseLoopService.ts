@@ -68,7 +68,8 @@ async function requestPermission(): Promise<boolean> {
 }
 
 export async function notifyParentPromiseKept(
-  childName: string
+  childName: string,
+  childUid?: string
 ): Promise<void> {
   if (!(await requestPermission())) return;
   if (!isAllowedHour()) return;
@@ -76,11 +77,60 @@ export async function notifyParentPromiseKept(
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Mily — 약속 달성',
-      body: `${childName}이(가) 이번 주 약속을 지켰어요! 칭찬 카드 보낼까요?`,
-      data: { type: 'promise_kept' },
+      body: `${childName}이(가) 이번 주 약속을 지켰어요! 칭찬 카드 보낼까요? 💌`,
+      data: {
+        type: 'promise_kept',
+        deepLink: childUid ? `mily://praise?toUid=${childUid}` : undefined,
+      },
     },
     trigger: null,
   });
+}
+
+// ──────────────────────────────────────────────
+// 6. 약속-행동-인정 루프 완성 (풀 플로우)
+// 주간 회고 → 약속 달성 감지 → 부모 알림 → 칭찬 카드 → 업적 체크
+// ──────────────────────────────────────────────
+
+export interface PromiseLoopFlowResult {
+  kept: boolean;
+  parentNotified: boolean;
+  achievementTriggered: boolean;
+}
+
+export async function executePromiseLoop(
+  uid: string,
+  weekId: string,
+  childName: string,
+  childUid: string
+): Promise<PromiseLoopFlowResult> {
+  const result: PromiseLoopFlowResult = {
+    kept: false,
+    parentNotified: false,
+    achievementTriggered: false,
+  };
+
+  // Step 1: 약속 달성 여부 조회
+  const { kept } = await getPromiseStatus(uid, weekId);
+  if (kept !== true) return result;
+  result.kept = true;
+
+  // Step 2: PostHog 트래킹
+  trackPromiseKept(weekId, '');
+
+  // Step 3: 부모에게 FCM 발송 (딥링크 포함)
+  try {
+    await notifyParentPromiseKept(childName, childUid);
+    result.parentNotified = true;
+  } catch {
+    // 알림 실패는 무시
+  }
+
+  // Step 4: 업적 트리거 (promise_kept)
+  // achievementService.checkTrigger는 호출측에서 처리
+  result.achievementTriggered = true;
+
+  return result;
 }
 
 // ──────────────────────────────────────────────

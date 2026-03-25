@@ -7,7 +7,7 @@ export function calculateBoundary(
   weeklyLimit: number,
   spendType?: SpendType | null
 ): PlanBoundary {
-  if (spendType === 'fixed') return 'within';
+  if (spendType === 'fixed' || spendType === 'give') return 'within';
   if (weeklyLimit === 0) return 'outside';
   const ratio = categoryAmount / weeklyLimit;
 
