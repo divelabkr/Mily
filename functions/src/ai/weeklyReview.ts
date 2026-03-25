@@ -1,8 +1,8 @@
 import { onCall } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import Anthropic from '@anthropic-ai/sdk';
+import { ANTHROPIC_SECRET, getSecretValue } from '../config/secrets';
 
-const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
+const anthropicApiKey = ANTHROPIC_SECRET;
 
 const AI_MODEL = 'claude-haiku-4-5-20251001';
 const AI_TIMEOUT_MS = 10000;

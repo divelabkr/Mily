@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +16,14 @@ import { theme } from '../../../src/ui/theme';
 import { isValidInviteCode } from '../../../src/utils/validators';
 import { useAuthStore } from '../../../src/engines/auth/authStore';
 import { joinFamilyByCode } from '../../../src/engines/family/familyService';
-import { isUnder14, createConsent } from '../../../src/engines/consent/consentService';
+import {
+  isUnder14,
+  createConsent,
+  requestGuardianConsent,
+  isValidGuardianEmail,
+  isValidGuardianPhone,
+} from '../../../src/engines/consent/consentService';
+import type { ConsentNotifyMethod } from '../../../src/engines/consent/consentService';
 import { completeOnboarding } from '../../../src/engines/auth/authService';
 
 export default function ChildJoinScreen() {
@@ -25,7 +33,8 @@ export default function ChildJoinScreen() {
 
   const [inviteCode, setInviteCode] = useState('');
   const [birthYear, setBirthYear] = useState('');
-  const [guardianEmail, setGuardianEmail] = useState('');
+  const [guardianContact, setGuardianContact] = useState('');
+  const [notifyMethod, setNotifyMethod] = useState<ConsentNotifyMethod>('email');
   const [loading, setLoading] = useState(false);
 
   const currentYear = new Date().getFullYear();
@@ -33,11 +42,15 @@ export default function ChildJoinScreen() {
   const needsConsent =
     birthYear.length === 4 && birthYearNum > 0 && isUnder14(birthYearNum);
 
+  const isContactValid = notifyMethod === 'email'
+    ? isValidGuardianEmail(guardianContact)
+    : isValidGuardianPhone(guardianContact);
+
   const canProceed =
     isValidInviteCode(inviteCode) &&
     birthYear.length === 4 &&
     birthYearNum > 0 &&
-    (!needsConsent || guardianEmail.trim().length > 0);
+    (!needsConsent || isContactValid);
 
   const handleJoin = async () => {
     if (!canProceed || !user) return;
@@ -54,7 +67,7 @@ export default function ChildJoinScreen() {
         return;
       }
 
-      // 14세 미만: 동의 생성
+      // 14세 미만: 동의 생성 + 법정대리인 알림 요청
       if (needsConsent) {
         await createConsent(
           family.ownerUid,
@@ -62,6 +75,12 @@ export default function ChildJoinScreen() {
           user.displayName,
           birthYearNum
         );
+        await requestGuardianConsent(user.uid, {
+          childName: user.displayName,
+          birthYear: birthYearNum,
+          guardianContact,
+          notifyMethod,
+        });
       }
 
       await completeOnboarding(user.uid);
@@ -105,14 +124,33 @@ export default function ChildJoinScreen() {
             <Text style={styles.consentText}>
               만 14세 미만의 경우, 부모님(법정대리인) 동의가 필요해요.
             </Text>
-            <Text style={styles.label}>부모님 이메일</Text>
+
+            {/* 알림 방법 선택 */}
+            <View style={styles.methodRow}>
+              {(['email', 'sms'] as ConsentNotifyMethod[]).map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.methodBtn, notifyMethod === m && styles.methodBtnActive]}
+                  onPress={() => { setNotifyMethod(m); setGuardianContact(''); }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.methodBtnText, notifyMethod === m && styles.methodBtnTextActive]}>
+                    {m === 'email' ? '이메일' : 'SMS'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.label}>
+              {notifyMethod === 'email' ? '부모님 이메일' : '부모님 휴대폰 번호'}
+            </Text>
             <TextInput
               style={styles.input}
-              placeholder="부모님 이메일을 입력해주세요"
+              placeholder={notifyMethod === 'email' ? '이메일 주소' : '010-XXXX-XXXX'}
               placeholderTextColor={theme.colors.textSecondary}
-              value={guardianEmail}
-              onChangeText={setGuardianEmail}
-              keyboardType="email-address"
+              value={guardianContact}
+              onChangeText={setGuardianContact}
+              keyboardType={notifyMethod === 'email' ? 'email-address' : 'phone-pad'}
               autoCapitalize="none"
             />
           </View>
@@ -172,6 +210,31 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     lineHeight: 20,
     marginBottom: theme.spacing[3],
+  },
+  methodRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: theme.spacing[3],
+  },
+  methodBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+  },
+  methodBtnActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primary + '15',
+  },
+  methodBtnText: {
+    fontSize: 14,
+    color: theme.colors.textSecondary,
+  },
+  methodBtnTextActive: {
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
   footer: {
     paddingVertical: theme.spacing[4],

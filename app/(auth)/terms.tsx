@@ -1,10 +1,23 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
+
+// 외부 법무 문서 링크 (스토어 심사 전 실제 URL로 교체)
+const PRIVACY_POLICY_URL = 'https://mily.app/privacy';
+const TERMS_OF_SERVICE_URL = 'https://mily.app/terms';
+
+async function openUrl(url: string) {
+  const supported = await Linking.canOpenURL(url);
+  if (supported) {
+    await Linking.openURL(url);
+  } else {
+    Alert.alert('링크를 열 수 없어요', '브라우저에서 직접 확인해주세요.');
+  }
+}
 
 export default function TermsScreen() {
   const { t } = useTranslation();
@@ -47,6 +60,23 @@ export default function TermsScreen() {
           광고 SDK는 탑재되어 있지 않습니다. 수집 데이터는 제3자에게
           판매되지 않습니다.
         </Text>
+
+        {/* 개인정보처리방침 전문 외부 링크 */}
+        <TouchableOpacity
+          style={styles.linkButton}
+          onPress={() => openUrl(PRIVACY_POLICY_URL)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.linkText}>개인정보처리방침 전문 보기 →</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.linkButton}
+          onPress={() => openUrl(TERMS_OF_SERVICE_URL)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.linkText}>이용약관 전문 보기 →</Text>
+        </TouchableOpacity>
 
         <Text style={styles.title}>AI 면책</Text>
         <View style={styles.aiDisclaimer}>
@@ -111,4 +141,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   footer: { paddingVertical: theme.spacing[4] },
+  linkButton: {
+    paddingVertical: theme.spacing[3],
+    marginBottom: theme.spacing[2],
+  },
+  linkText: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
+  },
 });
