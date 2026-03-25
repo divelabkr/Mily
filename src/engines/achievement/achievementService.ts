@@ -153,6 +153,50 @@ export function getUnlockRateLabel(
 }
 
 // ──────────────────────────────────────────────
+// 이벤트 트리거 기반 업적 체크
+// ──────────────────────────────────────────────
+
+/**
+ * 단발 이벤트 발생 시 업적 조건 체크 진입점.
+ * 전체 컨텍스트 없이 이벤트 이름만으로 호출 가능.
+ * partialCtx로 이벤트 관련 카운터만 넘긴다.
+ */
+export async function checkTrigger(
+  eventName: string,
+  uid: string,
+  partialCtx: Partial<AchievementContext> = {}
+): Promise<Achievement[]> {
+  const store = useAchievementStore.getState();
+  const alreadyUnlocked = store.userAchievements.map((ua) => ua.achievementId);
+
+  const ctx: AchievementContext = {
+    uid,
+    totalCheckIns: 0,
+    consecutiveWeeks: 0,
+    reviewCount: 0,
+    planCount: 0,
+    familyLinked: false,
+    praiseCardsSent: 0,
+    requestCardsSent: 0,
+    requestCardTypes: [],
+    emotionTagCount: 0,
+    emotionTagTypes: [],
+    memoCheckIns: 0,
+    promiseKeptCount: 0,
+    underBudgetWeeks: 0,
+    choiceSpendZeroWeeks: 0,
+    earnedBadges: [],
+    unlockedAchievements: alreadyUnlocked,
+    todayCheckInCount: 0,
+    todayCheckInAmounts: [],
+    ...partialCtx,
+  };
+
+  void eventName; // 향후 이벤트별 필터링 확장 지점
+  return checkAndUnlock(uid, ctx);
+}
+
+// ──────────────────────────────────────────────
 // 홈 "거의 다 왔어요" 카드용
 // ──────────────────────────────────────────────
 

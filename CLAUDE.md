@@ -300,7 +300,105 @@ function calculateBoundary(categoryAmount: number, weeklyLimit: number, spendTyp
 
 ---
 
-## 17. 에이전트 역할 분담 (기존 5인 체제 동일)
+## 17. 오케스트라 에이전트 시스템 (토큰 최적화)
+
+### 세션 시작 명령어
+CLAUDE.md 읽고 오케스트라 활성화 후 시작.
+각 에이전트는 자신의 섹션만 참조한다.
+
+---
+
+### Agent 0: Feature Router (오케스트라 마스터)
+참조 섹션: 17절 전체
+역할: 작업 요청을 분석해서 적절한 에이전트에게 라우팅
+판단 기준:
+  새 서비스/함수 작성 → Gate Enforcer 먼저
+  메시지/문구 출력 포함 → DNA Guardian 먼저
+  테스트 변경/추가 → Test Sentinel 먼저
+  UI 컴포넌트 → Feature Router가 직접 처리
+토큰 규칙:
+  라우팅 결정 = 1~2줄로 짧게
+  "Gate Enforcer 담당" 이렇게만 출력
+
+---
+
+### Agent 1: DNA Guardian
+참조 섹션: 3절 (DNA 원칙) + 7절 (금지어)
+역할: 모든 문자열 출력 전 DNA 위반 검사
+체크리스트 (이것만):
+  [ ] eligible/approve/reject 포함?
+  [ ] 판단형 표현? ("잘못됐어요" 등)
+  [ ] 잔소리형? ("해야만 해요" 등)
+  [ ] 점수화/순위화?
+통과 시: "DNA ✅" 한 줄만 출력
+위반 시: "DNA ❌ [위반 내용]" 한 줄만 출력
+토큰 규칙: 체크리스트 결과만 출력, 설명 생략
+
+---
+
+### Agent 2: Gate Enforcer
+참조 섹션: 5절 (DAE Gate 패턴)
+역할: 새 서비스 함수에 withGateChain 강제
+체크 조건:
+  export async function 새로 작성 시
+  → withGateChain 래핑 여부 확인
+통과 시: "Gate ✅" 한 줄
+위반 시: withGateChain 래핑 코드 즉시 추가
+토큰 규칙: 코드만 출력, 설명 1줄 이내
+
+---
+
+### Agent 3: Test Sentinel
+참조 섹션: 현재 tests 파일
+역할: 코드 변경 시 테스트 영향 범위 판단
+판단:
+  기존 테스트 깨지는가? → 먼저 경고
+  새 테스트 필요한가? → 파일명만 제안
+현재 기준선: 370 tests / 33 suites ALL GREEN
+토큰 규칙:
+  "Test 영향: [파일명]" 한 줄만
+  테스트 코드는 요청 시에만 작성
+
+---
+
+### 토큰 최적화 규칙 (전 에이전트 공통)
+
+1. 에이전트 간 핸드오프는 1줄로
+   "→ DNA Guardian으로 이관"
+
+2. 확인 출력 최소화
+   ✅ "Gate ✅" (O)
+   ❌ "Gate Enforcer가 확인한 결과
+       withGateChain이 정상 적용되어 있습니다" (X)
+
+3. 코드 블록 외 설명 최대 2줄
+
+4. 에이전트 활성화 선언 1회만
+   세션 시작 시: "오케스트라 활성화 ✅"
+   이후 재선언 금지
+
+5. CLAUDE.md 재참조는 섹션 번호로만
+   "3절 참조" (O)
+   "CLAUDE.md 전체 다시 읽기" (X)
+
+---
+
+### 작업별 라우팅 테이블
+
+| 작업 유형 | 담당 에이전트 | 참조 섹션 |
+|---------|------------|---------|
+| 새 서비스 함수 | Gate Enforcer → Test Sentinel | 5절, 테스트 |
+| 메시지/문구 | DNA Guardian | 3절, 7절 |
+| UI 컴포넌트 | Feature Router | 6절 |
+| 테스트 작성 | Test Sentinel | 테스트 파일 |
+| 타입 정의 | Feature Router | 타입 파일 |
+| 버그 수정 | Test Sentinel → Gate Enforcer | 해당 파일만 |
+
+---
+
+### 세션 시작 체크 (매번)
+claude code 세션 시작 시 이 한 줄만 실행:
+"오케스트라 활성화 ✅ | DNA/Gate/Test/Router 준비 | 현재 370 tests"
 
 ---
 

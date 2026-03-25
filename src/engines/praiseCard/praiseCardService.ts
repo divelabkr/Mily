@@ -4,6 +4,8 @@ import {
   getDocs,
   query,
   orderBy,
+  doc,
+  updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../../lib/firebase';
@@ -12,6 +14,9 @@ import {
   PraiseCardType,
   usePraiseCardStore,
 } from './praiseCardStore';
+import { checkTrigger } from '../achievement/achievementService';
+import { getPraiseRecommendation } from '../message/messageService';
+import type { PraiseSituation } from '../message/messageService';
 
 // Firestore 경로: praise_cards/{familyId}/{cardId}
 
@@ -41,6 +46,27 @@ export async function sendPraiseCard(
 
   usePraiseCardStore.getState().addCard(card);
   return card;
+}
+
+/**
+ * 자녀가 칭찬 카드를 확인했을 때 호출.
+ * Firestore에 seenAt 기록 + 업적 트리거.
+ */
+export async function seenPraiseCard(
+  uid: string,
+  familyId: string,
+  cardId: string
+): Promise<void> {
+  const ref = doc(getFirebaseDb(), 'praise_cards', familyId, cardId);
+  await updateDoc(ref, { seenAt: serverTimestamp() });
+  await checkTrigger('praise_received', uid, { praiseCardsSent: 0 });
+}
+
+/**
+ * 상황별 칭찬 카드 추천 문구 반환 (messageService 위임).
+ */
+export function recommendPraiseCard(situation: PraiseSituation) {
+  return getPraiseRecommendation(situation);
 }
 
 export async function loadPraiseCards(familyId: string): Promise<PraiseCard[]> {
