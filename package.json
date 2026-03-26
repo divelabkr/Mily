@@ -8,7 +8,14 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll=false",
-    "test:ci": "jest --ci --coverage"
+    "test:ci": "jest --ci --coverage",
+    "build:dev": "eas build --platform all --profile development",
+    "build:preview": "eas build --platform all --profile preview",
+    "build:prod": "eas build --platform all --profile production",
+    "submit:ios": "eas submit --platform ios",
+    "submit:android": "eas submit --platform android",
+    "update": "eas update --branch preview --message",
+    "generate:icons": "node assets/generate-icons.js"
   },
   "dependencies": {
     "@amplitude/analytics-react-native": "^1.5.46",
