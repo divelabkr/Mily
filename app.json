@@ -11,30 +11,35 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAFAF8"
+      "backgroundColor": "#4A3728"
     },
     "ios": {
-      "bundleIdentifier": "com.mily.app",
+      "bundleIdentifier": "kr.divelab.mily",
       "supportsTablet": false,
+      "buildNumber": "1",
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "주간 회고 알림과 가족 요청 카드 알림을 위해 필요합니다.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "프로필 사진 촬영을 위해 카메라 접근이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "프로필 사진 선택을 위해 사진 라이브러리 접근이 필요합니다."
       },
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.mily.app",
+      "package": "kr.divelab.mily",
       "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#FAFAF8",
+        "backgroundColor": "#4A3728",
         "foregroundImage": "./assets/images/adaptive-icon.png"
       },
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
       ]
     },
     "web": {
@@ -44,11 +49,25 @@
     },
     "plugins": [
       "expo-router",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.0"
+          },
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "minSdkVersion": 24
+          }
+        }
+      ],
       [
         "expo-notifications",
         {
           "icon": "./assets/images/notification-icon.png",
-          "color": "#F4A261",
+          "color": "#E8503A",
           "sounds": []
         }
       ]
@@ -63,7 +82,7 @@
     },
     "description": "미루지 않는 경제 대화, Mily",
     "keywords": ["용돈", "가족", "경제교육", "소비", "저금", "습관", "코칭"],
-    "primaryColor": "#F4A261",
+    "primaryColor": "#E8503A",
     "owner": "mily-team"
   }
 }
