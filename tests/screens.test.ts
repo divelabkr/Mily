@@ -61,14 +61,14 @@ describe('DrawerNavigator menu items', () => {
     expect(keys).toContain('cashflow');
   });
 
-  test('3. Adult menu: family_bank flag on → 패밀리뱅크 메뉴 표시', () => {
+  test('3. Adult menu: family_bank flag on → 가족 약속 기록함 메뉴 표시', () => {
     const items = getAdultMenuItems(t, true, 0, { family_bank_enabled: true });
-    expect(items.map((i) => i.key)).toContain('familybank');
+    expect(items.map((i) => i.key)).toContain('promise');
   });
 
-  test('4. Adult menu: millionaire flag on → 밀리어네어 메뉴 표시', () => {
+  test('4. Adult menu: millionaire flag on → 꿈 설계소 메뉴 표시', () => {
     const items = getAdultMenuItems(t, true, 0, { millionaire_enabled: true });
-    expect(items.map((i) => i.key)).toContain('millionaire');
+    expect(items.map((i) => i.key)).toContain('dream');
   });
 
   test('5. Child menu: flags off → 기존 메뉴만', () => {
@@ -84,19 +84,19 @@ describe('DrawerNavigator menu items', () => {
     expect(items.map((i) => i.key)).toContain('dream');
   });
 
-  test('7. Child menu: family_bank on → 패밀리뱅크 표시', () => {
+  test('7. Child menu: family_bank on → 가족 약속 기록함 표시', () => {
     const items = getChildMenuItems(t, { family_bank_enabled: true });
-    expect(items.map((i) => i.key)).toContain('familybank');
+    expect(items.map((i) => i.key)).toContain('promise');
   });
 
-  test('8. Adult menu: all flags on → 10 items (parent)', () => {
+  test('8. Adult menu: all flags on → 9 items (parent)', () => {
     const allFlags: FeatureFlagMap = {
       cashflow_engine_enabled: true,
       family_bank_enabled: true,
       millionaire_enabled: true,
     };
     const items = getAdultMenuItems(t, true, 0, allFlags);
-    expect(items.length).toBe(10);
+    expect(items.length).toBe(9);
   });
 });
 

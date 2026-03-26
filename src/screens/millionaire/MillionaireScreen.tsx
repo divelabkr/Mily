@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// MillionaireScreen.tsx — 밀리의 밀리어네어
+// MillionaireScreen.tsx — 밀리의 꿈 설계소
 // 상단 탭: 롤모델 | 꿈 계산기
 // Feature Flag: MILLIONAIRE_ENABLED
 // ──────────────────────────────────────────────
@@ -32,7 +32,7 @@ import type { AgeBand } from '../../engines/message/milyPersona';
 
 type TabKey = 'rolemodel' | 'dream';
 
-export interface MillionaireScreenProps {
+export interface DreamStudioScreenProps {
   ageBand: AgeBand;
   audience?: 'parent' | 'child' | 'both';
 }
@@ -118,7 +118,7 @@ function DreamCard({
 
 // ── 메인 화면 ────────────────────────────────
 
-export function MillionaireScreen({ ageBand, audience = 'both' }: MillionaireScreenProps) {
+export function DreamStudioScreen({ ageBand, audience = 'both' }: DreamStudioScreenProps) {
   const [activeTab, setActiveTab] = useState<TabKey>('rolemodel');
   const [monthlySaving, setMonthlySaving] = useState('10000');
 
@@ -137,7 +137,7 @@ export function MillionaireScreen({ ageBand, audience = 'both' }: MillionaireScr
   return (
     <ScreenLayout>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.screenTitle}>밀리의 밀리어네어</Text>
+        <Text style={styles.screenTitle}>밀리의 꿈 설계소</Text>
 
         {/* 탭 */}
         <View style={styles.tabRow}>
@@ -251,3 +251,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, fontWeight: '600', color: theme.colors.textPrimary, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingVertical: 4 },
   inputUnit: { fontSize: 14, color: theme.colors.textSecondary, marginLeft: 4 },
 });
+
+// 하위 호환 re-export
+export { DreamStudioScreen as MillionaireScreen };
+export type { DreamStudioScreenProps as MillionaireScreenProps };

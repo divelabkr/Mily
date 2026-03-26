@@ -1,6 +1,6 @@
 // ──────────────────────────────────────────────
 // cashFlowEngine.ts — 캐시플로우 엔진
-// 자유 지수 = 수동소득 / 지출. 0%=래트레이스 100%=탈출
+// 수동소득 비율 = 수동소득 / 지출. 용돈 자립도 추적.
 // DNA 준수: 판단형 없음. 방향성만 표시.
 // ──────────────────────────────────────────────
 
@@ -23,7 +23,7 @@ export type WealthLevel =
   | 'sprout'      // 새싹 🌿 10,000~49,999
   | 'tree'        // 나무 🌳 50,000~199,999
   | 'forest'      // 숲 🌲 200,000~499,999
-  | 'millionaire'; // 밀리어네어 🏆 500,000+
+  | 'millionaire'; // 성장 단계 🏆 500,000+
 
 export type AssetType =
   | 'consumable'  // 💸 사라지는 돈
@@ -52,7 +52,7 @@ export interface CashFlowData {
   passiveIncome: number;    // 수동소득 합계
   totalInflow: number;
   totalOutflow: number;
-  freedomIndex: number;     // 수동소득 / 지출 (0~1)
+  passiveIncomeRatio: number; // 수동소득 / 지출 (0~1)
   assetRatio: number;       // 자산성 지출 / 전체 지출
   netWorthLevel: WealthLevel;
   netWorth: number;
@@ -61,7 +61,7 @@ export interface CashFlowData {
 // ── 레벨 임계값 ────────────────────────────────
 
 const WEALTH_THRESHOLDS: { min: number; level: WealthLevel; emoji: string; label: string }[] = [
-  { min: 500_000, level: 'millionaire', emoji: '🏆', label: '밀리어네어' },
+  { min: 500_000, level: 'millionaire', emoji: '🏆', label: '성장 단계' },
   { min: 200_000, level: 'forest',      emoji: '🌲', label: '숲' },
   { min: 50_000,  level: 'tree',        emoji: '🌳', label: '나무' },
   { min: 10_000,  level: 'sprout',      emoji: '🌿', label: '새싹' },
@@ -106,8 +106,8 @@ export function classifyAssetType(
 // ── 자유 지수 계산 ──────────────────────────────
 
 /**
- * 자유 지수 = 수동소득 / 전체 지출 (0~1).
- * 100% = 래트레이스 탈출.
+ * 수동소득 비율 = 수동소득 / 전체 지출 (0~1).
+ * 100% = 용돈 자립 완성.
  */
 export function calcFreedomIndex(
   passiveIncome: number,
@@ -124,11 +124,11 @@ export function getFreedomIndexLabel(freedomIndex: number): string {
   const pct = Math.round(freedomIndex * 100);
   let msg: string;
   if (pct >= 100) {
-    msg = '수동소득이 지출을 넘어섰어요! 자유 지수 100%를 달성했어요.';
+    msg = '수동소득이 지출을 넘어섰어요! 수동소득 비율 100%를 달성했어요.';
   } else if (pct >= 50) {
     msg = `수동소득이 지출의 ${pct}%를 채우고 있어요. 꾸준히 늘어나고 있어요!`;
   } else if (pct > 0) {
-    msg = `수동소득이 지출의 ${pct}%예요. 조금씩 자유 지수가 올라가고 있어요.`;
+    msg = `수동소득이 지출의 ${pct}%예요. 조금씩 수동소득 비율이 올라가고 있어요.`;
   } else {
     msg = '아직 수동소득이 없어요. 저금 이자나 심부름 수익이 첫 시작이에요.';
   }
@@ -136,7 +136,7 @@ export function getFreedomIndexLabel(freedomIndex: number): string {
   // DNA 검증
   const result = filterDna(msg);
   if (!result.passed) {
-    return '자유 지수를 확인해봐요.';
+    return '수동소득 비율을 확인해봐요.';
   }
   return msg;
 }
@@ -165,7 +165,7 @@ export function calculateCashFlowFromData(
     .reduce((sum, o) => sum + o.amount, 0);
 
   const assetRatio = totalOutflow > 0 ? investmentOutflow / totalOutflow : 0;
-  const freedomIndex = calcFreedomIndex(passiveIncome, totalOutflow);
+  const passiveIncomeRatio = calcFreedomIndex(passiveIncome, totalOutflow);
   const netWorth = totalInflow - totalOutflow; // 단순 월간 순현금흐름
   const netWorthLevel = getWealthLevel(Math.max(0, totalInflow)); // 누적은 별도
 
@@ -177,7 +177,7 @@ export function calculateCashFlowFromData(
     passiveIncome,
     totalInflow,
     totalOutflow,
-    freedomIndex,
+    passiveIncomeRatio,
     assetRatio,
     netWorthLevel,
     netWorth,
