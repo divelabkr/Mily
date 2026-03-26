@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// familyBankService.ts — 패밀리뱅크 계약 시스템
+// familyBankService.ts — 가족 약속 기록함 시스템
 // SHA-256 소유권 증명 + WORM(불변) 저장
 // DNA 준수: 실패/취소 = 패널티 없음
 // ──────────────────────────────────────────────
@@ -19,7 +19,7 @@ import { getFirebaseDb } from '../../lib/firebase';
 
 // ── 타입 ──────────────────────────────────────
 
-export type ContractType = 'loan' | 'interest' | 'chore_reward';
+export type ContractType = 'loan' | 'interest' | 'chore_reward'; // loan=빌리기 약속 / interest=모으기 약속 / chore_reward=심부름 약속
 export type RepaymentType = 'monthly' | 'lumpsum' | 'chore';
 export type ContractStatus = 'pending' | 'active' | 'completed' | 'cancelled';
 
@@ -33,8 +33,8 @@ export interface FamilyContract {
   id: string;
   familyId: string;
   type: ContractType;
-  fromUid: string;      // 대출자 (부모)
-  toUid: string;        // 수혜자 (자녀)
+  fromUid: string;      // 약속 제안자 (부모)
+  toUid: string;        // 약속 수락자 (자녀)
   title: string;
   amount: number;
   interestRate: number;           // 연 % (0 = 무이자)
@@ -90,7 +90,7 @@ export function generateHashCode(
 // ── Firestore CRUD ────────────────────────────
 
 /**
- * 계약 생성 (status: pending).
+ * 약속 생성 (status: pending).
  * 양쪽 서명 전까지 active 아님.
  */
 export async function createContract(
@@ -129,7 +129,7 @@ export async function createContract(
 }
 
 /**
- * 계약 서명 (status: pending → active).
+ * 약속 서명 (status: pending → active).
  * WORM: active 이후 내용 변경 불가.
  */
 export async function signContract(

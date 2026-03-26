@@ -1,176 +1,111 @@
-// ──────────────────────────────────────────────
-// CashFlowScreen.tsx — 캐시플로우 대시보드
-// freedomIndex % + WealthLevel 배지 + 수입/지출 시각화
-// Feature Flag: CASHFLOW_ENGINE_ENABLED
-// ──────────────────────────────────────────────
-
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import { ScreenLayout } from '../../ui/layouts/ScreenLayout';
-import { theme } from '../../ui/theme';
-import { filterDna } from '../../engines/message/dnaFilter';
+// CashFlowScreen.tsx — 캐시플로우 화면 (수동소득 비율 시각화)
+import React from 'react';
 import {
-  getWealthEmoji,
-  getWealthLabel,
-  getFreedomIndexLabel,
-  CashFlowData,
-  WealthLevel,
-} from '../../engines/cashflow/cashFlowEngine';
+  View, Text, StyleSheet, ScrollView, SafeAreaView,
+} from 'react-native';
+import { theme } from '../../ui/theme';
+import { DarkCard } from '../../components/ui/DarkCard';
+import { MilyCard } from '../../components/ui/MilyCard';
+import { CashFlowData, getWealthEmoji, getWealthLabel } from '../../engines/cashflow/cashFlowEngine';
 
-// ── 타입 ──────────────────────────────────────
-
-export interface CashFlowScreenProps {
-  cashFlowData: CashFlowData | null;
-  loading?: boolean;
+interface CashFlowScreenProps {
+  data: CashFlowData;
 }
 
-// ── 방향 화살표 ──────────────────────────────
-
-function DirectionArrow({ value, label }: { value: number; label: string }) {
-  const arrow = value >= 0 ? '↑' : '↓';
-  const color = value >= 0 ? theme.colors.success : '#E57373';
-  const safeLabel = filterDna(label).passed ? label : '항목';
-
-  return (
-    <View style={styles.arrowRow}>
-      <Text style={[styles.arrowIcon, { color }]}>{arrow}</Text>
-      <Text style={styles.arrowLabel}>{safeLabel}</Text>
-      <Text style={[styles.arrowValue, { color }]}>
-        {Math.abs(value).toLocaleString()}원
-      </Text>
-    </View>
-  );
-}
-
-// ── WealthLevel 배지 ────────────────────────
-
-function WealthBadge({ level }: { level: WealthLevel }) {
-  const emoji = getWealthEmoji(level);
-  const label = getWealthLabel(level);
-  return (
-    <View style={styles.badgeContainer}>
-      <Text style={styles.badgeEmoji}>{emoji}</Text>
-      <Text style={styles.badgeLabel}>{label}</Text>
-    </View>
-  );
-}
-
-// ── 자유 지수 프로그레스 바 ───────────────────
-
-function FreedomIndexBar({ index }: { index: number }) {
-  const pct = Math.round(index * 100);
-  const label = getFreedomIndexLabel(index);
+export function CashFlowScreen({ data }: CashFlowScreenProps) {
+  const passivePct = Math.round(data.passiveIncomeRatio * 100);
+  const assetPct = Math.round(data.assetRatio * 100);
+  const wealthEmoji = getWealthEmoji(data.netWorthLevel);
+  const wealthLabel = getWealthLabel(data.netWorthLevel);
 
   return (
-    <View style={styles.freedomCard}>
-      <Text style={styles.freedomTitle}>래트레이스 탈출 진행률</Text>
-      <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { width: `${pct}%` }]} />
-      </View>
-      <Text style={styles.freedomPct}>{pct}%</Text>
-      <Text style={styles.freedomLabel}>{label}</Text>
-    </View>
-  );
-}
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>돈의 흐름</Text>
 
-// ── 메인 화면 ────────────────────────────────
-
-export function CashFlowScreen({ cashFlowData, loading }: CashFlowScreenProps) {
-  if (loading) {
-    return (
-      <ScreenLayout>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      </ScreenLayout>
-    );
-  }
-
-  if (!cashFlowData) {
-    return (
-      <ScreenLayout>
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>아직 캐시플로우 데이터가 없어요.</Text>
-          <Text style={styles.emptyHint}>체크인을 시작하면 자동으로 생성돼요!</Text>
-        </View>
-      </ScreenLayout>
-    );
-  }
-
-  return (
-    <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.screenTitle}>캐시플로우</Text>
-
-        {/* WealthLevel 배지 */}
-        <WealthBadge level={cashFlowData.netWorthLevel} />
-
-        {/* 자유 지수 */}
-        <FreedomIndexBar index={cashFlowData.freedomIndex} />
-
-        {/* 수입 / 지출 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>수입</Text>
-          <DirectionArrow value={cashFlowData.totalInflow} label="총 수입" />
-          <DirectionArrow value={cashFlowData.passiveIncome} label="수동 소득" />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>지출</Text>
-          <DirectionArrow value={-cashFlowData.totalOutflow} label="총 지출" />
-        </View>
-
-        {/* 순현금흐름 */}
-        <View style={styles.netCard}>
-          <Text style={styles.netLabel}>순현금흐름</Text>
-          <Text
-            style={[
-              styles.netValue,
-              { color: cashFlowData.netWorth >= 0 ? theme.colors.success : '#E57373' },
-            ]}
-          >
-            {cashFlowData.netWorth >= 0 ? '+' : ''}
-            {cashFlowData.netWorth.toLocaleString()}원
+        {/* 수동소득 비율 메인 카드 */}
+        <DarkCard>
+          <Text style={styles.darkLabel}>수동소득 비율</Text>
+          <Text style={styles.darkPct}>{passivePct}%</Text>
+          <View style={styles.progressBg}>
+            <View style={[styles.progressFill, { width: `${Math.min(100, passivePct)}%` }]} />
+          </View>
+          <Text style={styles.darkSub}>
+            월 {data.passiveIncome.toLocaleString()}원 / 전체 {data.totalInflow.toLocaleString()}원
           </Text>
-        </View>
+        </DarkCard>
+
+        {/* 성장 단계 카드 */}
+        <MilyCard style={styles.levelCard}>
+          <Text style={styles.levelEmoji}>{wealthEmoji}</Text>
+          <View>
+            <Text style={styles.levelLabel}>성장 단계</Text>
+            <Text style={styles.levelName}>{wealthLabel}</Text>
+          </View>
+        </MilyCard>
+
+        {/* 돈의 방향 카드 */}
+        <MilyCard>
+          <Text style={styles.cardTitle}>돈의 방향</Text>
+          <View style={styles.flowRow}>
+            <View style={styles.flowItem}>
+              <Text style={styles.flowEmoji}>💰</Text>
+              <Text style={styles.flowLabel}>총 수입</Text>
+              <Text style={styles.flowAmount}>{data.totalInflow.toLocaleString()}</Text>
+            </View>
+            <Text style={styles.flowArrow}>→</Text>
+            <View style={styles.flowItem}>
+              <Text style={styles.flowEmoji}>📦</Text>
+              <Text style={styles.flowLabel}>총 지출</Text>
+              <Text style={styles.flowAmount}>{data.totalOutflow.toLocaleString()}</Text>
+            </View>
+            <Text style={styles.flowArrow}>→</Text>
+            <View style={styles.flowItem}>
+              <Text style={styles.flowEmoji}>📈</Text>
+              <Text style={styles.flowLabel}>자산 지출</Text>
+              <Text style={[styles.flowAmount, { color: theme.milyColors.mint }]}>{assetPct}%</Text>
+            </View>
+          </View>
+        </MilyCard>
+
+        {/* 수입원 다양성 카드 */}
+        <MilyCard>
+          <Text style={styles.cardTitle}>수입원</Text>
+          {data.inflows.map((inflow, i) => (
+            <View key={i} style={styles.inflowRow}>
+              <Text style={styles.inflowSource}>{inflow.source}</Text>
+              <Text style={styles.inflowAmount}>{inflow.amount.toLocaleString()}원</Text>
+              {inflow.isPassive && <Text style={styles.inflowPassive}>수동</Text>}
+            </View>
+          ))}
+        </MilyCard>
       </ScrollView>
-    </ScreenLayout>
+    </SafeAreaView>
   );
 }
-
-// ── 스타일 ─────────────────────────────────
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 16, color: theme.colors.textPrimary, marginBottom: 8 },
-  emptyHint: { fontSize: 14, color: theme.colors.textSecondary },
-  screenTitle: { fontSize: 22, fontWeight: '700', color: theme.colors.textPrimary, marginTop: 16, marginBottom: 20 },
-
-  // Badge
-  badgeContainer: { alignItems: 'center', paddingVertical: 16, backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.card, marginBottom: 16 },
-  badgeEmoji: { fontSize: 48 },
-  badgeLabel: { fontSize: 16, fontWeight: '600', color: theme.colors.textPrimary, marginTop: 4 },
-
-  // Freedom
-  freedomCard: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.card, padding: 16, marginBottom: 16 },
-  freedomTitle: { fontSize: 14, fontWeight: '600', color: theme.colors.textSecondary, marginBottom: 8 },
-  progressBarBg: { height: 12, backgroundColor: theme.colors.border, borderRadius: 6, overflow: 'hidden' },
-  progressBarFill: { height: 12, backgroundColor: theme.colors.primary, borderRadius: 6 },
-  freedomPct: { fontSize: 28, fontWeight: '700', color: theme.colors.primary, textAlign: 'center', marginTop: 8 },
-  freedomLabel: { fontSize: 13, color: theme.colors.textSecondary, textAlign: 'center', marginTop: 4 },
-
-  // Sections
-  section: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.card, padding: 16, marginBottom: 12 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: theme.colors.textPrimary, marginBottom: 12 },
-
-  // Arrow row
-  arrowRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
-  arrowIcon: { fontSize: 18, fontWeight: '700', width: 24 },
-  arrowLabel: { flex: 1, fontSize: 14, color: theme.colors.textSecondary },
-  arrowValue: { fontSize: 15, fontWeight: '600' },
-
-  // Net
-  netCard: { backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.card, padding: 20, alignItems: 'center', marginBottom: 24 },
-  netLabel: { fontSize: 14, color: theme.colors.textSecondary, marginBottom: 4 },
-  netValue: { fontSize: 24, fontWeight: '700' },
+  container: { flex: 1, backgroundColor: theme.milyColors.cream },
+  content: { padding: 16, gap: 12 },
+  title: { fontSize: 22, fontWeight: '700', color: theme.milyColors.brownDark, marginBottom: 4 },
+  darkLabel: { fontSize: 12, color: theme.milyColors.brownLight, marginBottom: 6 },
+  darkPct: { fontSize: 40, fontWeight: '700', color: '#fff', marginBottom: 12 },
+  progressBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 4, marginBottom: 10 },
+  progressFill: { height: 8, backgroundColor: theme.milyColors.mint, borderRadius: 4 },
+  darkSub: { fontSize: 12, color: theme.milyColors.brownLight },
+  levelCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  levelEmoji: { fontSize: 40 },
+  levelLabel: { fontSize: 12, color: theme.milyColors.brownMid, marginBottom: 2 },
+  levelName: { fontSize: 18, fontWeight: '700', color: theme.milyColors.brownDark },
+  cardTitle: { fontSize: 14, fontWeight: '600', color: theme.milyColors.brownDark, marginBottom: 12 },
+  flowRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  flowItem: { flex: 1, alignItems: 'center' },
+  flowEmoji: { fontSize: 24, marginBottom: 4 },
+  flowLabel: { fontSize: 11, color: theme.milyColors.brownMid, marginBottom: 4 },
+  flowAmount: { fontSize: 13, fontWeight: '600', color: theme.milyColors.brownDark },
+  flowArrow: { fontSize: 18, color: theme.milyColors.brownLight, paddingHorizontal: 4 },
+  inflowRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: theme.milyColors.surface2 },
+  inflowSource: { fontSize: 14, color: theme.milyColors.brownDark, flex: 1 },
+  inflowAmount: { fontSize: 14, fontWeight: '600', color: theme.milyColors.brownDark },
+  inflowPassive: { fontSize: 11, color: theme.milyColors.mint, backgroundColor: theme.milyColors.mintBg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, marginLeft: 6 },
 });

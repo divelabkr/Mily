@@ -1,5 +1,5 @@
 // ──────────────────────────────────────────────
-// FamilyBankScreen.tsx — 패밀리뱅크 계약 목록
+// FamilyBankScreen.tsx — 가족 약속 기록함
 // pending/active/completed 탭 + 신뢰 레벨 배지
 // Feature Flag: FAMILY_BANK_ENABLED
 // ──────────────────────────────────────────────
@@ -40,15 +40,15 @@ const STATUS_TABS: { key: ContractStatus; label: string }[] = [
 ];
 
 const TRUST_BADGES: Record<TrustLevel, { emoji: string; label: string }> = {
-  1: { emoji: '🌱', label: 'Lv.1 시작' },
-  2: { emoji: '🌿', label: 'Lv.2 성장' },
-  3: { emoji: '🌳', label: 'Lv.3 신뢰' },
-  4: { emoji: '⭐', label: 'Lv.4 자립' },
+  1: { emoji: '🌱', label: '씨앗' },
+  2: { emoji: '🌿', label: '새싹' },
+  3: { emoji: '🌳', label: '나무' },
+  4: { emoji: '⭐', label: '자립' },
 };
 
 const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  loan: '대출',
-  interest: '이자 적금',
+  loan: '빌리기 약속',
+  interest: '모으기 약속',
   chore_reward: '심부름 보상',
 };
 
@@ -89,7 +89,7 @@ function ContractCard({ contract }: { contract: FamilyContract }) {
         />
       </View>
       <Text style={styles.contractProgress}>
-        {paidCount} / {contract.totalMonths}회 상환
+        {paidCount} / {contract.totalMonths}회 이행
       </Text>
     </View>
   );
@@ -120,7 +120,7 @@ export function FamilyBankScreen({
   return (
     <ScreenLayout>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.screenTitle}>패밀리 뱅크</Text>
+        <Text style={styles.screenTitle}>가족 약속 기록함</Text>
 
         {/* 신뢰 레벨 */}
         <TrustBadge level={trustLevel} />
@@ -148,9 +148,9 @@ export function FamilyBankScreen({
         {filtered.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {activeTab === 'pending' && '대기 중인 약정서가 없어요.'}
-              {activeTab === 'active' && '진행 중인 약정서가 없어요.'}
-              {activeTab === 'completed' && '완료된 약정서가 없어요.'}
+              {activeTab === 'pending' && '대기 중인 약속이 없어요.'}
+              {activeTab === 'active' && '진행 중인 약속이 없어요.'}
+              {activeTab === 'completed' && '완료된 약속이 없어요.'}
             </Text>
           </View>
         ) : (
@@ -159,7 +159,7 @@ export function FamilyBankScreen({
 
         {/* 새 약정서 생성 */}
         <TouchableOpacity style={styles.createBtn} onPress={onCreateContract}>
-          <Text style={styles.createBtnText}>+ 새 약정서 만들기</Text>
+          <Text style={styles.createBtnText}>+ 새 약속 만들기</Text>
         </TouchableOpacity>
       </ScrollView>
     </ScreenLayout>

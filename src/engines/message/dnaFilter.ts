@@ -42,6 +42,9 @@ const FORBIDDEN_WORDS: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /\beligible/i, label: 'eligible' },
   { pattern: /\bapprove/i, label: 'approve' },
   { pattern: /\breject/i, label: 'reject' },
+  { pattern: /래트레이스/, label: '래트레이스' },
+  { pattern: /자유지수/, label: '자유지수' },
+  { pattern: /신뢰레벨/, label: '신뢰레벨' },
 ];
 
 // ── 판단형 표현 ───────────────────────────────
@@ -72,6 +75,8 @@ const SCORING_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /소비 점수/, label: '소비 점수' },
   { pattern: /훈계/, label: '훈계' },
   { pattern: /낙인/, label: '낙인' },
+  { pattern: /평가/, label: '평가' },
+  { pattern: /점수/, label: '점수' },
 ];
 
 // ── 순위화/비교 ───────────────────────────────
@@ -90,6 +95,7 @@ const PERSONALITY_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
   { pattern: /충동형/, label: '충동형' },
   { pattern: /계획형이야/, label: '계획형이야' },
   { pattern: /너는 .{1,10}형이야/, label: '성향 라벨링' },
+  { pattern: /낙인/, label: '낙인' },
 ];
 
 // ── 공개 API ──────────────────────────────────

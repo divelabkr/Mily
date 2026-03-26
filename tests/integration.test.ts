@@ -59,7 +59,7 @@ describe('Integration: Adult checkin → cashflow', () => {
     expect(result.passiveIncome).toBe(5000);
     expect(result.totalInflow).toBe(55000);
     expect(result.totalOutflow).toBe(30000);
-    expect(result.freedomIndex).toBeCloseTo(5000 / 30000, 5);
+    expect(result.passiveIncomeRatio).toBeCloseTo(5000 / 30000, 5);
     expect(result.netWorthLevel).toBeDefined();
   });
 

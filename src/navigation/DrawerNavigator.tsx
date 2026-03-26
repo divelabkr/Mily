@@ -34,6 +34,8 @@ export interface FeatureFlagMap {
   millionaire_enabled?: boolean;
   life_events_enabled?: boolean;
   financial_statement_enabled?: boolean;
+  agreement_loop_enabled?: boolean;
+  sibling_enabled?: boolean;
 }
 
 export function getAdultMenuItems(
@@ -43,16 +45,15 @@ export function getAdultMenuItems(
   flags: FeatureFlagMap = {}
 ): DrawerMenuItem[] {
   return [
-    { key: 'home',        label: t('drawer_home'),        route: '/(adult)/home',               visible: true },
-    { key: 'report',      label: t('drawer_report'),      route: '/(adult)/review',             visible: true },
-    { key: 'plan',        label: t('drawer_plan'),        route: '/(adult)/plan',               visible: true },
-    { key: 'request',     label: t('drawer_request'),     route: '/(adult)/family',  badge: requestBadge, visible: isParent },
-    { key: 'achievement', label: t('drawer_achievement'), route: '/(adult)/my',                 visible: true },
-    { key: 'family',      label: t('drawer_family'),      route: '/(adult)/family',             visible: isParent },
-    { key: 'cashflow',    label: '💰 ' + t('drawer_cashflow'),    route: '/(adult)/cashflow',   visible: !!flags.cashflow_engine_enabled },
-    { key: 'familybank',  label: '🏦 ' + t('drawer_familybank'),  route: '/(adult)/familybank', visible: !!flags.family_bank_enabled },
-    { key: 'millionaire', label: '🏆 ' + t('drawer_millionaire'), route: '/(adult)/millionaire', visible: !!flags.millionaire_enabled },
-    { key: 'settings',    label: t('drawer_settings'),    route: '/(adult)/my',                 visible: true },
+    { key: 'home',        label: '홈',              route: '/(adult)/home',               visible: true },
+    { key: 'review',      label: '주간회고',         route: '/(adult)/review',             visible: true },
+    { key: 'request',     label: '요청카드',         route: '/(adult)/family',  badge: requestBadge, visible: isParent },
+    { key: 'achievement', label: '업적',             route: '/(adult)/my',                 visible: true },
+    { key: 'family',      label: '가족',             route: '/(adult)/family',             visible: isParent },
+    { key: 'cashflow',    label: '💰 수동소득',      route: '/(adult)/cashflow',           visible: !!flags.cashflow_engine_enabled },
+    { key: 'promise',     label: '🤝 가족 약속 기록함', route: '/(adult)/promise',         visible: !!flags.family_bank_enabled },
+    { key: 'dream',       label: '🎯 꿈 설계소',     route: '/(adult)/dream',             visible: !!flags.millionaire_enabled },
+    { key: 'settings',    label: '설정',             route: '/(adult)/my',                 visible: true },
   ].filter((item) => item.visible);
 }
 
@@ -61,13 +62,12 @@ export function getChildMenuItems(
   flags: FeatureFlagMap = {}
 ): DrawerMenuItem[] {
   return [
-    { key: 'home',        label: t('drawer_home'),        route: '/(child)/home',        visible: true },
-    { key: 'plan',        label: t('drawer_plan'),        route: '/(child)/plan',        visible: true },
-    { key: 'request',     label: t('drawer_request'),     route: '/(child)/request',     visible: true },
-    { key: 'achievement', label: t('drawer_achievement'), route: '/(child)/me',          visible: true },
-    { key: 'dream',       label: '🎯 ' + t('drawer_dream'),       route: '/(child)/millionaire', visible: !!flags.millionaire_enabled },
-    { key: 'familybank',  label: '🏦 ' + t('drawer_familybank'),  route: '/(child)/familybank',  visible: !!flags.family_bank_enabled },
-    { key: 'privacy',     label: t('drawer_privacy'),     route: '/(child)/me',          visible: true },
+    { key: 'home',        label: '홈',               route: '/(child)/home',         visible: true },
+    { key: 'report',      label: '리포트',            route: '/(child)/report',       visible: true },
+    { key: 'request',     label: '요청카드',          route: '/(child)/request',      visible: true },
+    { key: 'dream',       label: '🎯 꿈 설계소',      route: '/(child)/dream',        visible: !!flags.millionaire_enabled },
+    { key: 'promise',     label: '🤝 가족 약속 기록함', route: '/(child)/promise',    visible: !!flags.family_bank_enabled },
+    { key: 'achievement', label: '업적',              route: '/(child)/me',           visible: true },
   ].filter((item) => item.visible);
 }
 

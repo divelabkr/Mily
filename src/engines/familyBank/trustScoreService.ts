@@ -1,6 +1,6 @@
 // ──────────────────────────────────────────────
-// trustScoreService.ts — 신뢰 점수 시스템
-// 레벨만 표시. 하락 없음. 숫자 미노출.
+// trustScoreService.ts — 약속 이행 기록 시스템
+// 이모지 단계만 표시. 숫자 점수 미노출. 하락 없음.
 // DNA 준수: 실패 = 패널티 없음. 상승만.
 // ──────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ export type TrustLevel = 1 | 2 | 3 | 4;
 export type TrustEventType =
   | 'promise_kept'          // 약속 이행 +10
   | 'repayment_complete'    // 상환 완료 +20
-  | 'savings_matured'       // 적금 만기 +15
+  | 'savings_matured'       // 모으기 약속 달성 +15
   | 'praise_received'       // 칭찬카드 수신 +5
   | 'contract_cancelled';   // 계약 취소 (점수 변동 없음 — DNA 원칙)
 
@@ -51,7 +51,7 @@ const EVENT_DELTAS: Record<TrustEventType, number> = {
 const EVENT_DESCRIPTIONS: Record<TrustEventType, string> = {
   promise_kept: '약속을 지켰어요',
   repayment_complete: '상환을 완료했어요',
-  savings_matured: '적금 만기를 달성했어요',
+  savings_matured: '모으기 약속을 달성했어요',
   praise_received: '칭찬 카드를 받았어요',
   contract_cancelled: '계약이 취소됐어요 (영향 없음)',
 };
@@ -92,31 +92,31 @@ export interface LevelInfo {
 export const LEVEL_INFO: Record<TrustLevel, LevelInfo> = {
   1: {
     level: 1,
-    label: '새싹 🌱',
-    description: '밀리 패밀리뱅크를 시작했어요!',
+    label: '씨앗 🌱',
+    description: '밀리 약속 기록을 시작했어요!',
     loanLimit: 10_000,
-    perks: ['소액 가족 대출 가능'],
+    perks: ['소액 가족 빌리기 약속 가능'],
   },
   2: {
     level: 2,
-    label: '성장 🌿',
-    description: '약속을 꾸준히 지켜오고 있어요.',
+    label: '새싹 🌿',
+    description: '약속을 꾸준히 지켜왔어요!',
     loanLimit: 30_000,
     perks: ['대출 한도 증가', '이자율 협상 가능'],
   },
   3: {
     level: 3,
-    label: '신뢰 🌳',
-    description: '가족 모두가 믿는 든든한 구성원이에요.',
+    label: '나무 🌳',
+    description: '믿음이 쌓인 가족이에요!',
     loanLimit: 50_000,
-    perks: ['대출 한도 추가 증가', '무이자 신청 가능'],
+    perks: ['빌리기 약속 한도 추가 증가', '무이자 빌리기 약속 신청 가능'],
   },
   4: {
     level: 4,
-    label: '전설 🏆',
-    description: '밀리 패밀리뱅크의 레전드예요!',
+    label: '숲 🌲',
+    description: '가족 약속의 달인이에요!',
     loanLimit: 100_000,
-    perks: ['최대 한도', '자유 약정 설계 가능'],
+    perks: ['최대 약속 가능', '자유 약속 설계 가능'],
   },
 };
 
@@ -176,7 +176,7 @@ export async function addEvent(
 }
 
 /**
- * 현재 대출 한도 조회 (레벨 기반).
+ * 빌리기 약속 한도 조회 (레벨 기반).
  */
 export async function getLoanLimit(uid: string): Promise<number> {
   const trust = await getScore(uid);
