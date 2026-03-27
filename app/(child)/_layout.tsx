@@ -34,6 +34,22 @@ export default function ChildLayout() {
         name="me"
         options={{ title: t('tab_my'), tabBarIcon: () => null }}
       />
+      <Tabs.Screen
+        name="dream"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="promise"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="achievement"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="simulator"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }
