@@ -16,7 +16,6 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../../lib/firebase';
-import { withGateChain } from '../../dae/withGateChain';
 import { filterDna } from '../message/dnaFilter';
 
 // ── 타입 ──────────────────────────────────────
@@ -94,79 +93,73 @@ export const STAGE_LABELS: Record<AgreementStage, string> = {
 
 const LOOPS_COLLECTION = 'agreement_loops';
 
-export const createAgreementLoop = withGateChain(
-  async (input: Omit<AgreementLoop, 'id' | 'stage' | 'createdAt' | 'updatedAt'>): Promise<AgreementLoop> => {
-    const db = getFirebaseDb();
-    const ref = doc(collection(db, LOOPS_COLLECTION));
-    const now = Date.now();
-    const loop: AgreementLoop = {
-      ...input,
-      id: ref.id,
-      stage: 'request',
-      createdAt: now,
-      updatedAt: now,
-    };
-    await setDoc(ref, loop);
-    return loop;
+export async function createAgreementLoop(
+  input: Omit<AgreementLoop, 'id' | 'stage' | 'createdAt' | 'updatedAt'>
+): Promise<AgreementLoop> {
+  const db = getFirebaseDb();
+  const ref = doc(collection(db, LOOPS_COLLECTION));
+  const now = Date.now();
+  const loop: AgreementLoop = {
+    ...input,
+    id: ref.id,
+    stage: 'request',
+    createdAt: now,
+    updatedAt: now,
+  };
+  await setDoc(ref, loop);
+  return loop;
+}
+
+export async function transitionStage(
+  loopId: string,
+  to: AgreementStage,
+  payload?: Partial<AgreementLoop>
+): Promise<AgreementLoop> {
+  const db = getFirebaseDb();
+  const ref = doc(db, LOOPS_COLLECTION, loopId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error(`합의 루프를 찾을 수 없어요: ${loopId}`);
+
+  const current = snap.data() as AgreementLoop;
+  if (!canTransition(current.stage, to)) {
+    throw new Error(`${current.stage} → ${to} 전이는 허용되지 않아요`);
   }
-);
 
-export const transitionStage = withGateChain(
-  async (
-    loopId: string,
-    to: AgreementStage,
-    payload?: Partial<AgreementLoop>
-  ): Promise<AgreementLoop> => {
-    const db = getFirebaseDb();
-    const ref = doc(db, LOOPS_COLLECTION, loopId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) throw new Error(`합의 루프를 찾을 수 없어요: ${loopId}`);
+  const updates: Partial<AgreementLoop> = {
+    stage: to,
+    updatedAt: Date.now(),
+    ...payload,
+  };
 
-    const current = snap.data() as AgreementLoop;
-    if (!canTransition(current.stage, to)) {
-      throw new Error(`${current.stage} → ${to} 전이는 허용되지 않아요`);
-    }
-
-    const updates: Partial<AgreementLoop> = {
-      stage: to,
-      updatedAt: Date.now(),
-      ...payload,
-    };
-
-    // 완료 시점 기록
-    if (to === 'completed') {
-      updates.completedAt = Date.now();
-    }
-
-    await updateDoc(ref, updates);
-    return { ...current, ...updates };
+  if (to === 'completed') {
+    updates.completedAt = Date.now();
   }
-);
 
-export const addReflection = withGateChain(
-  async (
-    loopId: string,
-    reflection: AgreementReflection
-  ): Promise<void> => {
-    // DNA 필터: 회고 메모 검증
-    if (reflection.childNote) {
-      const r = filterDna(reflection.childNote);
-      if (!r.passed) throw new Error('DNA 위반 (응답 무효): ' + r.violations.map(v => v.matched).join(', '));
-    }
-    if (reflection.parentNote) {
-      const r = filterDna(reflection.parentNote);
-      if (!r.passed) throw new Error('DNA 위반 (응답 무효): ' + r.violations.map(v => v.matched).join(', '));
-    }
+  await updateDoc(ref, updates);
+  return { ...current, ...updates };
+}
 
-    const db = getFirebaseDb();
-    const ref = doc(db, LOOPS_COLLECTION, loopId);
-    await updateDoc(ref, {
-      reflection,
-      stage: 'reflect' as AgreementStage,
-      updatedAt: Date.now(),
-    });
+export async function addReflection(
+  loopId: string,
+  reflection: AgreementReflection
+): Promise<void> {
+  if (reflection.childNote) {
+    const r = filterDna(reflection.childNote);
+    if (!r.passed) throw new Error('DNA 위반 (응답 무효): ' + r.violations.map(v => v.matched).join(', '));
   }
-);
+  if (reflection.parentNote) {
+    const r = filterDna(reflection.parentNote);
+    if (!r.passed) throw new Error('DNA 위반 (응답 무효): ' + r.violations.map(v => v.matched).join(', '));
+  }
+
+  const db = getFirebaseDb();
+  const ref = doc(db, LOOPS_COLLECTION, loopId);
+  await updateDoc(ref, {
+    reflection,
+    stage: 'reflect' as AgreementStage,
+    updatedAt: Date.now(),
+  });
+}
 
 export async function getActiveLoops(familyId: string): Promise<AgreementLoop[]> {
   const db = getFirebaseDb();

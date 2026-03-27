@@ -51,13 +51,27 @@ export function getWeeklyTotal(checkIns: CheckIn[]): number {
 }
 
 /** SpendType별 주간 합계 */
-export function getWeeklyTotalBySpendType(
-  checkIns: CheckIn[],
-  spendType: SpendType
-): number {
+function sumBySpendType(checkIns: CheckIn[], spendType: SpendType): number {
   return checkIns
     .filter((c) => c.spendType === spendType)
     .reduce((sum, c) => sum + c.amount, 0);
+}
+
+/** 특정 지출유형 합산 또는 { fixed, living, choice } 전체 반환 */
+export function getWeeklyTotalBySpendType(checkIns: CheckIn[], spendType: SpendType): number;
+export function getWeeklyTotalBySpendType(checkIns: CheckIn[]): { fixed: number; living: number; choice: number };
+export function getWeeklyTotalBySpendType(
+  checkIns: CheckIn[],
+  spendType?: SpendType
+): { fixed: number; living: number; choice: number } | number {
+  if (spendType !== undefined) {
+    return sumBySpendType(checkIns, spendType);
+  }
+  return {
+    fixed:  sumBySpendType(checkIns, 'fixed'),
+    living: sumBySpendType(checkIns, 'living'),
+    choice: sumBySpendType(checkIns, 'choice'),
+  };
 }
 
 /**
@@ -65,7 +79,7 @@ export function getWeeklyTotalBySpendType(
  * CLAUDE.md: 고정비 제외, 선택소비 우선 표시
  */
 export function getWeeklyChoiceTotal(checkIns: CheckIn[]): number {
-  return getWeeklyTotalBySpendType(checkIns, 'choice');
+  return sumBySpendType(checkIns, 'choice');
 }
 
 /** { fixed, living, choice } 한 번에 반환 */
@@ -75,8 +89,8 @@ export function getWeeklySpendBreakdown(checkIns: CheckIn[]): {
   choice: number;
 } {
   return {
-    fixed:  getWeeklyTotalBySpendType(checkIns, 'fixed'),
-    living: getWeeklyTotalBySpendType(checkIns, 'living'),
-    choice: getWeeklyTotalBySpendType(checkIns, 'choice'),
+    fixed:  sumBySpendType(checkIns, 'fixed'),
+    living: sumBySpendType(checkIns, 'living'),
+    choice: sumBySpendType(checkIns, 'choice'),
   };
 }

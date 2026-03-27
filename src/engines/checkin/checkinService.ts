@@ -37,6 +37,19 @@ export async function saveCheckIn(
   return saved;
 }
 
+export function getWeeklyTotalBySpendType(
+  checkins: CheckIn[]
+): { fixed: number; living: number; choice: number } {
+  return checkins.reduce(
+    (acc, c) => {
+      const type = c.spendType as 'fixed' | 'living' | 'choice';
+      acc[type] = (acc[type] ?? 0) + c.amount;
+      return acc;
+    },
+    { fixed: 0, living: 0, choice: 0 }
+  );
+}
+
 export async function loadWeeklyCheckIns(
   uid: string,
   weekId?: string

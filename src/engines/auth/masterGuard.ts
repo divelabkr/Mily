@@ -5,6 +5,20 @@
 import { useAuthStore } from './authStore';
 
 // ──────────────────────────────────────────────
+// 마스터 UID 목록 (환경 변수 또는 하드코드)
+// ──────────────────────────────────────────────
+
+export const MASTER_UIDS: string[] = [];
+
+// ──────────────────────────────────────────────
+// 순수 uid 기반 판별 (테스트/서비스 레이어용)
+// ──────────────────────────────────────────────
+
+export function isMasterAccount(uid: string): boolean {
+  return MASTER_UIDS.includes(uid);
+}
+
+// ──────────────────────────────────────────────
 // 마스터 권한 목록
 // ──────────────────────────────────────────────
 
@@ -60,8 +74,9 @@ export function isMasterUser(): boolean {
   return useAuthStore.getState().user?.isMaster === true;
 }
 
-export function assertMaster(): void {
-  if (!isMasterUser()) {
+export function assertMaster(uid?: string): void {
+  const isMaster = uid != null ? isMasterAccount(uid) : isMasterUser();
+  if (!isMaster) {
     throw new Error('[MasterGuard] 마스터 계정만 접근 가능합니다.');
   }
 }

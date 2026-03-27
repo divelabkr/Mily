@@ -60,7 +60,7 @@ export interface AchievementContext {
   contractsCompleted: number;      // 가족 합의(약속) 완료 횟수
   ageBandUpgraded: boolean;        // 밴드 업그레이드 여부
   isGraduated: boolean;            // 성년 전환 완료 여부
-  freedomIndex: number;            // 자유 지수 (0~100, 래트레이스 기반)
+  freedomIndex: number;            // 수동소득 지수 (0~100, 수동소득/생활비 비율)
   familyBankCompleted: boolean;    // 패밀리뱅크 미션 전부 완료 여부
   totalMilyXp: number;             // 밀리 경험치 총합
 }

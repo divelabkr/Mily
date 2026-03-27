@@ -200,8 +200,8 @@ export const ECONOMY_TIPS: Record<AgeBand, EconomyTip[]> = {
     {
       id: 'd_rat_race',
       ageBand: 'D',
-      concept: '래트레이스 탈출 조건',
-      body: '수동소득이 생활비를 넘으면 래트레이스에서 벗어난 거예요. 자산 쌓기가 핵심이에요.',
+      concept: '수동소득으로 생활비 충당하기',
+      body: '수동소득이 생활비를 넘으면 돈이 돈을 버는 구조가 돼요. 자산 쌓기가 핵심이에요.',
       curiosityHook: '일하지 않아도 생활비가 나오려면 뭐가 필요할까?',
       emoji: '🏃',
     },

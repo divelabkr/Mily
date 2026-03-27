@@ -594,8 +594,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   {
     id: 'rat_race_escape',
     category: 'milestone',
-    title: '래트레이스 탈출',
-    description: '자유 지수 100%를 달성했어요! 경제적 자유의 첫걸음이에요.',
+    title: '수동소득 마스터',
+    description: '수동소득 지수 100%를 달성했어요! 경제적 자유의 첫걸음이에요.',
     rarity: 'hidden',
     isHidden: true,
     hint: null,
