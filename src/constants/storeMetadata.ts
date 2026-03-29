@@ -23,5 +23,5 @@ Mily는 가족이 함께 소비를 기록하고
 Mily는 금융 서비스가 아닙니다.
 소비 기록과 가족 대화를 돕는 교육 앱이에요.`;
 
-export const PRIVACY_URL = 'https://mily.app/privacy';
-export const TERMS_URL = 'https://mily.app/terms';
+export const PRIVACY_URL = 'https://mily-lab-dev.web.app/privacy';
+export const TERMS_URL = 'https://mily-lab-dev.web.app/terms';

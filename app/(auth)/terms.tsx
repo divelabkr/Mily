@@ -6,9 +6,10 @@ import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
 
-// 외부 법무 문서 링크 (스토어 심사 전 실제 URL로 교체)
-const PRIVACY_POLICY_URL = 'https://mily.app/privacy';
-const TERMS_OF_SERVICE_URL = 'https://mily.app/terms';
+import { LEGAL_URLS } from '../../src/constants/urls';
+
+const PRIVACY_POLICY_URL = LEGAL_URLS.privacy;
+const TERMS_OF_SERVICE_URL = LEGAL_URLS.terms;
 
 async function openUrl(url: string) {
   const supported = await Linking.canOpenURL(url);

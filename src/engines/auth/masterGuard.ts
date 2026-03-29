@@ -8,7 +8,8 @@ import { useAuthStore } from './authStore';
 // 마스터 UID 목록 (환경 변수 또는 하드코드)
 // ──────────────────────────────────────────────
 
-export const MASTER_UIDS: string[] = [];
+const ENV_MASTER_UID = process.env.EXPO_PUBLIC_MASTER_UID ?? '';
+export const MASTER_UIDS: string[] = ENV_MASTER_UID ? [ENV_MASTER_UID] : [];
 
 // ──────────────────────────────────────────────
 // 순수 uid 기반 판별 (테스트/서비스 레이어용)

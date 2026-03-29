@@ -119,7 +119,13 @@ export function initAuthListener(): () => void {
             onboardingComplete: userDoc.onboardingComplete,
             isMaster,
           });
-          identify(userDoc.uid, { isMaster, role: userDoc.role });
+          identify(userDoc.uid, {
+            isMaster,
+            role: userDoc.role,
+            familyId: userDoc.familyId ?? null,
+            onboardingCompleted: userDoc.onboardingComplete,
+            has_family: !!userDoc.familyId,
+          });
           // FCM 토큰 자동 발급 + 저장 (fire-and-forget)
           getToken()
             .then((token) => { if (token) saveToken(userDoc.uid, token); })

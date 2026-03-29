@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Constants from 'expo-constants';
 import {
   View,
   Text,
@@ -7,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +17,7 @@ import { Card } from '../../src/ui/components/Card';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
 import { useAuthStore } from '../../src/engines/auth/authStore';
+import { signOut } from '../../src/engines/auth/authService';
 import { softDeleteAccount } from '../../src/engines/auth/deleteAccount';
 import {
   removeMemberFromFamily,
@@ -81,7 +84,20 @@ export default function MyScreen() {
   }, [permissions.accessAllScreens]);
 
   // ── 탈퇴 3단계 ──
-  const handleDeleteStep1 = () => setDeleteStep(1);
+  const handleDeleteStep1 = () => {
+    if (subscription.planId !== 'free' && subscription.isActive) {
+      Alert.alert(
+        '유료 구독 중이에요',
+        '탈퇴 전에 앱스토어(또는 Play 스토어) 설정에서 구독을 먼저 해지해주세요. 해지하지 않으면 탈퇴 후에도 결제가 계속될 수 있어요.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '그래도 탈퇴하기', onPress: () => setDeleteStep(1) },
+        ]
+      );
+      return;
+    }
+    setDeleteStep(1);
+  };
   const handleDeleteStep2 = () => setDeleteStep(2);
   const handleDeleteConfirm = async () => {
     if (!user) return;
@@ -231,6 +247,23 @@ export default function MyScreen() {
     }
   };
 
+  const handleFeedback = () => {
+    Linking.openURL('mailto:hello@mily.app?subject=Mily 피드백');
+  };
+
+  const handleLogout = () => {
+    Alert.alert('로그아웃', '로그아웃 하시겠어요?', [
+      { text: t('common_cancel'), style: 'cancel' },
+      {
+        text: '로그아웃',
+        onPress: async () => {
+          await signOut();
+          router.replace('/(auth)/login');
+        },
+      },
+    ]);
+  };
+
   const menuItems = [
     { label: t('my_profile'), onPress: () => {} },
     {
@@ -260,6 +293,14 @@ export default function MyScreen() {
     {
       label: '이용약관 / 개인정보처리방침',
       onPress: () => router.push('/(auth)/terms'),
+    },
+    {
+      label: '의견 보내기',
+      onPress: handleFeedback,
+    },
+    {
+      label: '로그아웃',
+      onPress: handleLogout,
     },
     { label: t('my_delete_account'), onPress: handleDeleteStep1 },
   ];
@@ -322,6 +363,9 @@ export default function MyScreen() {
         </Card>
 
         <Text style={styles.disclaimer}>{t('my_not_financial_service')}</Text>
+        <Text style={styles.versionText}>
+          버전 {Constants.expoConfig?.version ?? '1.0.0'}
+        </Text>
 
         {/* ── 개발자 도구 — 마스터 전용 (일반 유저 절대 노출 금지) ── */}
         {permissions.accessAllScreens && (
@@ -703,6 +747,12 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: theme.spacing[6],
+    marginBottom: theme.spacing[2],
+  },
+  versionText: {
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
     marginBottom: theme.spacing[6],
   },
   // ── 개발자 도구 ──
