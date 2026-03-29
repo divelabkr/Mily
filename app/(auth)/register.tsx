@@ -26,7 +26,7 @@ export default function RegisterScreen() {
       await signUpWithEmail(email, password, name.trim(), 'individual');
       // 가입 성공 → AuthGate가 onboarding/role-select로 자동 이동
     } catch (e: unknown) {
-      Alert.alert(t('auth_register'), getAuthErrorMessage(e));
+      Alert.alert(t('auth_register'), getAuthErrorMessage((e as { code?: string })?.code ?? ''));
     } finally {
       setLoading(false);
     }

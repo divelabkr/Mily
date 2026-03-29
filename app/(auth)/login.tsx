@@ -1,30 +1,41 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
-import { useTranslation } from 'react-i18next';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
-import { isValidEmail, isValidPassword } from '../../src/utils/validators';
 import { signInWithEmail, getAuthErrorMessage } from '../../src/engines/auth/authService';
-import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
-  const { t } = useTranslation();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const isValid = isValidEmail(email) && isValidPassword(password);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
-    if (!isValid) return;
+    if (!email.trim()) {
+      setError('이메일을 입력해주세요');
+      return;
+    }
+    if (!password) {
+      setError('비밀번호를 입력해주세요');
+      return;
+    }
+    setError('');
     setLoading(true);
     try {
-      await signInWithEmail(email, password);
+      await signInWithEmail(email.trim(), password);
       // AuthGate가 자동으로 리다이렉트
     } catch (e: unknown) {
-      Alert.alert(t('auth_login'), getAuthErrorMessage(e));
+      setError(getAuthErrorMessage((e as { code?: string })?.code ?? ''));
     } finally {
       setLoading(false);
     }
@@ -33,40 +44,55 @@ export default function LoginScreen() {
   return (
     <ScreenLayout>
       <View style={styles.container}>
-        <Text style={styles.title}>{t('app_name')}</Text>
-        <Text style={styles.slogan}>{t('slogan')}</Text>
+        <Text style={styles.title}>Mily</Text>
+        <Text style={styles.slogan}>미루지 않는 경제 대화, Mily</Text>
 
         <TextInput
           style={styles.input}
-          placeholder={t('auth_email_placeholder')}
+          placeholder="이메일"
           placeholderTextColor={theme.colors.textSecondary}
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => { setEmail(text); setError(''); }}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth_password_placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="비밀번호"
+            placeholderTextColor={theme.colors.textSecondary}
+            value={password}
+            onChangeText={(text) => { setPassword(text); setError(''); }}
+            secureTextEntry={!showPassword}
+          />
+          <TouchableOpacity
+            style={styles.eyeButton}
+            onPress={() => setShowPassword((v) => !v)}
+            accessibilityLabel={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+          >
+            <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : null}
 
         <Button
-          title={t('auth_login')}
+          title="로그인"
           onPress={handleLogin}
-          disabled={!isValid}
+          disabled={loading}
           loading={loading}
+          style={styles.loginButton}
         />
 
         <Button
-          title={t('auth_register')}
+          title="가입하기"
           onPress={() => router.push('/(auth)/register')}
           variant="outline"
+          disabled={loading}
           style={styles.registerButton}
         />
       </View>
@@ -103,6 +129,40 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surface,
     marginBottom: theme.spacing[3],
+  },
+  passwordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.input,
+    backgroundColor: theme.colors.surface,
+    marginBottom: theme.spacing[3],
+  },
+  passwordInput: {
+    flex: 1,
+    height: 48,
+    paddingHorizontal: theme.spacing[4],
+    fontSize: 16,
+    color: theme.colors.textPrimary,
+  },
+  eyeButton: {
+    paddingHorizontal: theme.spacing[3],
+    height: 48,
+    justifyContent: 'center',
+  },
+  eyeIcon: {
+    fontSize: 18,
+  },
+  errorText: {
+    color: '#E8503A',
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: theme.spacing[3],
+  },
+  loginButton: {
+    marginTop: theme.spacing[2],
   },
   registerButton: {
     marginTop: theme.spacing[3],
