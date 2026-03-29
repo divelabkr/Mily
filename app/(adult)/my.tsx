@@ -182,7 +182,6 @@ export default function MyScreen() {
         value: couponValue,
         recipientUid: couponTargetUid.trim(),
         isMinor: true, // 마스터 UI에서는 isMinor=true로 기본 처리 (자녀 대상)
-        sentAt: new Date(),
       });
       Alert.alert('발송 완료', `${couponBrand} ${couponValue.toLocaleString()}원 쿠폰이 발송됐습니다.`);
       setCouponTargetUid('');

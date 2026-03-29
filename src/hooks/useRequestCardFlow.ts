@@ -31,13 +31,14 @@ export function useRequestCardFlow(): RequestCardFlowHook {
     setIsSubmitting(true);
     setError(null);
     try {
-      await sendRequestCard({
-        uid: user.uid,
-        familyId: user.familyId,
-        type,
-        amount,
+      await sendRequestCard(
+        user.familyId,
+        user.uid,
+        user.familyId,
         reason,
-      });
+        type,
+        user.displayName,
+      );
       return true;
     } catch (e: any) {
       setError(e?.message ?? '요청 카드 발송에 실패했어요');
@@ -45,13 +46,14 @@ export function useRequestCardFlow(): RequestCardFlowHook {
     } finally {
       setIsSubmitting(false);
     }
-  }, [user?.uid, user?.familyId]);
+  }, [user?.uid, user?.familyId, user?.displayName]);
 
   const accept = useCallback(async (cardId: string): Promise<boolean> => {
+    if (!user?.familyId) return false;
     setIsSubmitting(true);
     setError(null);
     try {
-      await respondToCard(cardId, 'approved');
+      await respondToCard(user.familyId, cardId, 'cheered');
       return true;
     } catch (e: any) {
       setError(e?.message ?? '응답 처리에 실패했어요');
@@ -59,13 +61,14 @@ export function useRequestCardFlow(): RequestCardFlowHook {
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [user?.familyId]);
 
-  const decline = useCallback(async (cardId: string, reason: string): Promise<boolean> => {
+  const decline = useCallback(async (cardId: string, _reason: string): Promise<boolean> => {
+    if (!user?.familyId) return false;
     setIsSubmitting(true);
     setError(null);
     try {
-      await respondToCard(cardId, 'declined', reason);
+      await respondToCard(user.familyId, cardId, 'held');
       return true;
     } catch (e: any) {
       setError(e?.message ?? '응답 처리에 실패했어요');
@@ -73,7 +76,7 @@ export function useRequestCardFlow(): RequestCardFlowHook {
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [user?.familyId]);
 
   const refresh = useCallback(async () => {
     if (!user?.familyId) return;

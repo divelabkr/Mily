@@ -54,7 +54,11 @@ service cloud.firestore {
     match /families/{familyId} {
       allow read: if request.auth != null &&
         request.auth.uid in resource.data.memberUids;
-      allow write: if request.auth != null &&
+      // create: 본인이 ownerUid인 경우만 (신규 가족 생성)
+      allow create: if request.auth != null &&
+        request.resource.data.ownerUid == request.auth.uid;
+      // update/delete: 기존 ownerUid만
+      allow update, delete: if request.auth != null &&
         request.auth.uid == resource.data.ownerUid;
     }
 
@@ -144,6 +148,25 @@ service cloud.firestore {
       allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.guardianUid;
       allow update, delete: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // consent_requests/{requestId}
+    //   자녀: create (childUid = 본인)
+    //   부모/자녀: read
+    //   부모: update (parentUid = 본인)
+    //   delete: 금지
+    // ──────────────────────────────────────────────
+    match /consent_requests/{requestId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.childUid ||
+        request.auth.uid == resource.data.parentUid
+      );
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.childUid;
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.parentUid;
+      allow delete: if false;
     }
 
     // ──────────────────────────────────────────────

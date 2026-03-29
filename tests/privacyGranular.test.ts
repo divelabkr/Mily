@@ -31,11 +31,11 @@ jest.mock('firebase/firestore', () => ({
 const ALL_CATEGORIES = ['food', 'transport', 'entertainment', 'fashion', 'study'] as const;
 type TestCategoryId = typeof ALL_CATEGORIES[number];
 
-function makeSettings(overrides?: Partial<PrivacySettings>): PrivacySettings {
+function makeSettings(overrides?: Record<string, any>): PrivacySettings {
   return {
     ...defaultPrivacySettings('child1', 'family1'),
     ...overrides,
-  };
+  } as PrivacySettings;
 }
 
 // ──────────────────────────────────────────────
@@ -120,7 +120,7 @@ describe('isShareExpired()', () => {
 describe('getParentViewInfo()', () => {
   it('sharedCategories=[] → visibleCategories=[], 전부 hidden', () => {
     const s = makeSettings({ sharedCategories: [] });
-    const info = getParentViewInfo(s, ALL_CATEGORIES as unknown as string[]);
+    const info = getParentViewInfo(s, ALL_CATEGORIES as any);
     expect(info.visibleCategories).toHaveLength(0);
     expect(info.hiddenCategories).toHaveLength(ALL_CATEGORIES.length);
   });
@@ -130,7 +130,7 @@ describe('getParentViewInfo()', () => {
       shareMode: 'total_only',
       sharedCategories: ['food', 'transport'],
     });
-    const info = getParentViewInfo(s, ALL_CATEGORIES as unknown as string[]);
+    const info = getParentViewInfo(s, ALL_CATEGORIES as any);
     expect(info.visibleCategories).toHaveLength(0);
   });
 
@@ -139,7 +139,7 @@ describe('getParentViewInfo()', () => {
       shareMode: 'categories_only',
       sharedCategories: ['food', 'transport'],
     });
-    const info = getParentViewInfo(s, ALL_CATEGORIES as unknown as string[]);
+    const info = getParentViewInfo(s, ALL_CATEGORIES as any);
     expect(info.visibleCategories).toContain('food');
     expect(info.visibleCategories).toContain('transport');
     expect(info.hiddenCategories).toContain('entertainment');
@@ -150,7 +150,7 @@ describe('getParentViewInfo()', () => {
       shareMode: 'full',
       sharedCategories: ['food'],
     });
-    const info = getParentViewInfo(s, ALL_CATEGORIES as unknown as string[]);
+    const info = getParentViewInfo(s, ALL_CATEGORIES as any);
     expect(info.visibleCategories).toContain('food');
   });
 
@@ -159,7 +159,7 @@ describe('getParentViewInfo()', () => {
       sharedCategories: ['food'],
       shareExpiresAt: Date.now() - 1,
     });
-    const info = getParentViewInfo(s, ALL_CATEGORIES as unknown as string[]);
+    const info = getParentViewInfo(s, ALL_CATEGORIES as any);
     expect(info.isExpired).toBe(true);
     expect(info.visibleCategories).toHaveLength(0);
   });
@@ -171,10 +171,10 @@ describe('getParentViewInfo()', () => {
 
 describe('buildFilteredSummary()', () => {
   const checkIns = [
-    { categoryId: 'food' as TestCategoryId,          amount: 15000 },
-    { categoryId: 'transport' as TestCategoryId,     amount: 5000 },
-    { categoryId: 'entertainment' as TestCategoryId, amount: 20000 },
-  ];
+    { categoryId: 'food',          amount: 15000 },
+    { categoryId: 'transport',     amount: 5000 },
+    { categoryId: 'entertainment', amount: 20000 },
+  ] as any[];
 
   it('total_only → categoryBreakdown=null, totalAmount만 반환', () => {
     const s = makeSettings({

@@ -103,6 +103,7 @@ export default function CheckInScreen() {
   const handleSave = async (force = false) => {
     const amountNum = parseInt(amount, 10);
     if (!amountNum || amountNum <= 0 || !user) return;
+    try {
 
     if (plan && !force) {
       const currentTotal = getWeeklyCategoryTotal(checkIns, selectedCategory);
@@ -122,6 +123,9 @@ export default function CheckInScreen() {
     }
 
     await doSave(amountNum);
+    } catch {
+      // 저장 실패 — 사용자는 재시도 가능
+    }
   };
 
   const doSave = async (amountNum: number) => {

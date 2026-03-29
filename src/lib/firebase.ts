@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFunctions, Functions } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
@@ -16,6 +17,7 @@ const firebaseConfig = {
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _functions: Functions | null = null;
 
 function getApp_(): FirebaseApp {
   if (!_app) {
@@ -34,6 +36,13 @@ export function getFirebaseAuth(): Auth {
     _auth = getAuth(getApp_());
   }
   return _auth;
+}
+
+export function getFirebaseFunctions(): Functions {
+  if (!_functions) {
+    _functions = getFunctions(getApp_());
+  }
+  return _functions;
 }
 
 export function getFirebaseDb(): Firestore {

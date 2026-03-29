@@ -36,14 +36,14 @@ jest.mock('../src/engines/family/familyStore', () => ({
 const mockGetDoc = jest.fn();
 const mockUpdateDoc = jest.fn().mockResolvedValue(undefined);
 const mockDoc = jest.fn(() => ({ id: 'mock-ref' }));
-const mockArrayUnion = jest.fn((...args: unknown[]) => args);
+const mockArrayUnion = jest.fn((...args: any[]) => args);
 const mockServerTimestamp = jest.fn(() => 'SERVER_TS');
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  arrayUnion: (...args: unknown[]) => mockArrayUnion(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
+  updateDoc: (...args: any[]) => (mockUpdateDoc as any)(...args),
+  arrayUnion: (...args: any[]) => (mockArrayUnion as any)(...args),
   serverTimestamp: () => mockServerTimestamp(),
 }));
 

@@ -18,17 +18,20 @@ export function init(): void {
 
 export function identify(userId: string, properties?: Record<string, unknown>): void {
   if (!_client) return;
-  _client.identify(userId, properties);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _client.identify(userId, properties as any);
 }
 
 export function capture(event: string, properties?: Record<string, unknown>): void {
   if (!_client) return;
-  _client.capture(event, properties);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _client.capture(event, properties as any);
 }
 
 export function captureError(error: Error, context?: Record<string, unknown>): void {
   if (!_client) return;
-  _client.capture('$exception', {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (_client.capture as any)('$exception', {
     $exception_message: error.message,
     $exception_type: error.name,
     $exception_stack_trace: error.stack,

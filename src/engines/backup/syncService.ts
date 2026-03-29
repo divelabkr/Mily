@@ -136,7 +136,7 @@ export async function exportData(uid: string): Promise<void> {
     const Sharing = await import('expo-sharing');
     const FileSystem = await import('expo-file-system');
     const json = JSON.stringify(exportPayload, null, 2);
-    const fileUri = `${FileSystem.documentDirectory}mily_export_${Date.now()}.json`;
+    const fileUri = `${(FileSystem as any).documentDirectory}mily_export_${Date.now()}.json`;
     await FileSystem.writeAsStringAsync(fileUri, json);
     await Sharing.shareAsync(fileUri, {
       mimeType: 'application/json',

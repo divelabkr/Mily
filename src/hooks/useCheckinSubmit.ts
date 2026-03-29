@@ -5,7 +5,7 @@ import { usePlanStore } from '../engines/plan/planStore';
 import { saveCheckIn } from '../engines/checkin/checkinService';
 import { getCategoryWeeklyLimit } from '../engines/plan/planService';
 import { getWeekId } from '../utils/dateUtils';
-import type { SpendType } from '../engines/plan/defaultCategories';
+import type { SpendType, CategoryId } from '../engines/plan/defaultCategories';
 
 interface CheckinInput {
   amount: number;
@@ -37,7 +37,7 @@ export function useCheckinSubmit(): CheckinSubmitHook {
     setError(null);
     try {
       const weekId = getWeekId(new Date());
-      const categoryId = input.categoryId ?? (input.spendType === 'fixed' ? 'fixed_general' : input.spendType === 'living' ? 'living_general' : 'choice_general');
+      const categoryId = (input.categoryId ?? (input.spendType === 'fixed' ? 'etc' : input.spendType === 'living' ? 'food' : 'etc')) as CategoryId;
 
       // boundary 계산
       let boundary: 'within' | 'similar' | 'outside' = 'within';

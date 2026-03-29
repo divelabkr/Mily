@@ -11,7 +11,7 @@ export const theme = {
     warning: '#F4A261',
     border: '#E8E8E8',
   },
-  spacing: [0, 4, 8, 12, 16, 24, 32, 48] as const,
+  spacing: [0, 4, 8, 12, 16, 24, 32, 48, 64, 80, 96] as const,
   borderRadius: { card: 16, button: 12, input: 8 },
   milyColors: {
     cream: '#FAF7F2',

@@ -14,7 +14,7 @@ import {
 // posthog 모킹
 const mockCapture = jest.fn();
 jest.mock('../src/engines/monitoring/posthogService', () => ({
-  capture: (...args: unknown[]) => mockCapture(...args),
+  capture: (...args: any[]) => (mockCapture as any)(...args),
 }));
 
 // firebase 모킹
@@ -27,9 +27,9 @@ const mockGetDoc = jest.fn();
 const mockGetDocs = jest.fn(() => Promise.resolve({ docs: [] }));
 jest.mock('firebase/firestore', () => ({
   doc: jest.fn(),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
   collection: jest.fn(),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
+  getDocs: (...args: any[]) => (mockGetDocs as any)(...args),
   query: jest.fn(),
   orderBy: jest.fn(),
   limit: jest.fn(),
@@ -45,7 +45,7 @@ const mockSchedule = jest.fn(() => Promise.resolve());
 jest.mock('expo-notifications', () => ({
   getPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
-  scheduleNotificationAsync: (...args: unknown[]) => mockSchedule(...args),
+  scheduleNotificationAsync: (...args: any[]) => (mockSchedule as any)(...args),
 }));
 
 // notificationService 모킹
@@ -146,7 +146,7 @@ describe('notifyParentPromiseKept()', () => {
 
   it('알림 본문에 칭찬 카드 제안 포함', async () => {
     await notifyParentPromiseKept('지은');
-    const call = mockSchedule.mock.calls[0][0];
+    const call = (mockSchedule.mock.calls as any)[0]?.[0];
     expect(call.content.body).toContain('칭찬 카드');
   });
 

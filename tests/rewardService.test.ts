@@ -13,11 +13,16 @@ import {
   updateRewardSettings,
 } from '../src/engines/reward/rewardService';
 
-// firebase 모킹
+// httpsCallable 모킹
+const mockHttpsCallable = jest.fn();
 jest.mock('../src/lib/firebase', () => ({
   getFirebaseApp: jest.fn(() => ({})),
   getFirebaseAuth: jest.fn(),
   getFirebaseDb: jest.fn(() => ({})),
+  getFirebaseFunctions: jest.fn(() => ({})),
+}));
+jest.mock('firebase/functions', () => ({
+  httpsCallable: () => mockHttpsCallable,
 }));
 
 // posthog 모킹
@@ -38,19 +43,19 @@ const mockGetDoc = jest.fn();
 const mockGetDocs = jest.fn();
 const mockDoc = jest.fn(() => ({ id: 'mock-ref' }));
 const mockCollection = jest.fn(() => ({ id: 'mock-collection' }));
-const mockQuery = jest.fn((...args: unknown[]) => args[0]);
+const mockQuery = jest.fn((...args: any[]) => args[0]);
 const mockWhere = jest.fn();
 const mockDeleteField = jest.fn(() => 'DELETE_SENTINEL');
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  collection: (...args: unknown[]) => mockCollection(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  setDoc: (...args: unknown[]) => mockSetDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  query: (...args: unknown[]) => mockQuery(...args),
-  where: (...args: unknown[]) => mockWhere(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  collection: (...args: any[]) => (mockCollection as any)(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
+  getDocs: (...args: any[]) => (mockGetDocs as any)(...args),
+  setDoc: (...args: any[]) => (mockSetDoc as any)(...args),
+  updateDoc: (...args: any[]) => (mockUpdateDoc as any)(...args),
+  query: (...args: any[]) => (mockQuery as any)(...args),
+  where: (...args: any[]) => (mockWhere as any)(...args),
   deleteField: () => mockDeleteField(),
 }));
 
@@ -194,7 +199,7 @@ describe('hasActiveCoupons()', () => {
 // ──────────────────────────────────────────────
 
 describe('markAsUsed()', () => {
-  it('사용 완료 시 isVisible=false 업데이트', async () => {
+  it('사용 완료 시 Functions callable 호출', async () => {
     const couponSnap = {
       exists: () => true,
       data: () => ({
@@ -205,13 +210,11 @@ describe('markAsUsed()', () => {
       }),
     };
     mockGetDoc.mockResolvedValueOnce(couponSnap);
+    mockHttpsCallable.mockResolvedValueOnce({ data: { success: true } });
 
     await markAsUsed('uid-008', 'c10');
 
-    expect(mockUpdateDoc).toHaveBeenCalledTimes(1);
-    const [, updateData] = mockUpdateDoc.mock.calls[0];
-    expect(updateData.isVisible).toBe(false);
-    expect(updateData.usedAt).toBeDefined();
+    expect(mockHttpsCallable).toHaveBeenCalledWith({ uid: 'uid-008', couponId: 'c10' });
   });
 });
 
@@ -220,27 +223,12 @@ describe('markAsUsed()', () => {
 // ──────────────────────────────────────────────
 
 describe('checkAndExpireCoupons()', () => {
-  it('만료된 쿠폰 isVisible=false 업데이트', async () => {
-    const expiredCoupon = {
-      couponId: 'c20',
-      isVisible: true,
-      usedAt: undefined,
-      expiresAt: NOW - 1000, // 이미 만료
-    };
-    const activeCoupon = {
-      couponId: 'c21',
-      isVisible: true,
-      usedAt: undefined,
-      expiresAt: NOW + 10 * 24 * 60 * 60 * 1000, // 10일 후
-    };
-    mockGetDocs.mockResolvedValueOnce(makeCouponSnap([expiredCoupon, activeCoupon]));
+  it('Functions callable로 만료 처리 위임', async () => {
+    mockHttpsCallable.mockResolvedValueOnce({ data: { expired: 1 } });
 
     await checkAndExpireCoupons('uid-009');
 
-    // 만료된 c20만 업데이트
-    expect(mockUpdateDoc).toHaveBeenCalledTimes(1);
-    const [, updateData] = mockUpdateDoc.mock.calls[0];
-    expect(updateData.isVisible).toBe(false);
+    expect(mockHttpsCallable).toHaveBeenCalledWith({ uid: 'uid-009' });
   });
 });
 

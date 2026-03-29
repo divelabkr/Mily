@@ -49,7 +49,7 @@ function RoleModelCard({ model }: { model: RoleModel }) {
 }
 
 function DreamCard({ scenario, monthlySaving }: { scenario: DreamScenario; monthlySaving: number }) {
-  const months = calculateTimeToAchieve(scenario.realWorldPrice, monthlySaving, 0.02);
+  const months = calculateTimeToAchieve(scenario, monthlySaving, 0.02);
   const timeText = months == null ? '저축액을 입력해요' :
     months >= 24 ? `약 ${Math.floor(months / 12)}년 ${months % 12}개월` :
     `약 ${months}개월`;

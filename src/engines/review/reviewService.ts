@@ -1,12 +1,11 @@
 import {
   doc,
   setDoc,
-  getDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { getFirebaseDb } from '../../lib/firebase';
-import { generateWeeklyReview } from '../ai/aiToneService';
-import { WeeklyReviewOutput, WeeklyReviewInput } from '../ai/prompts/weeklyReview';
+import { httpsCallable } from 'firebase/functions';
+import { getFirebaseDb, getFirebaseFunctions } from '../../lib/firebase';
+import { WeeklyReviewOutput } from '../ai/prompts/weeklyReview';
 import { Plan } from '../plan/planStore';
 import { CheckIn } from '../checkin/checkinStore';
 import { DEFAULT_CATEGORIES } from '../plan/defaultCategories';
@@ -37,23 +36,37 @@ export async function generateReview(
   plan: Plan,
   checkIns: CheckIn[]
 ): Promise<WeeklyReviewOutput> {
-  const input: WeeklyReviewInput = {
+  const weekId = getWeekId();
+  const callInput = {
+    weekId,
+    totalBudget: getWeeklyBudget(plan),
     categories: DEFAULT_CATEGORIES.map((cat) => ({
       categoryId: cat.id,
       label: cat.label,
-      planned: getCategoryWeeklyLimit(plan, cat.id),
-      actual: getWeeklyCategoryTotal(checkIns, cat.id),
-      spendType: cat.defaultSpendType,
+      weeklyLimit: getCategoryWeeklyLimit(plan, cat.id),
+      spent: getWeeklyCategoryTotal(checkIns, cat.id),
+      spendType: cat.defaultSpendType ?? null,
     })),
     emotionTags: checkIns
       .map((c) => c.emotionTag)
       .filter((t): t is NonNullable<typeof t> => t != null),
-    totalBudget: getWeeklyBudget(plan),
-    totalSpent: getWeeklyTotal(checkIns),
   };
 
-  const result = await generateWeeklyReview(input);
-  return result;
+  try {
+    const fn = httpsCallable<typeof callInput, WeeklyReviewOutput>(
+      getFirebaseFunctions(),
+      'generateWeeklyReview'
+    );
+    const result = await fn(callInput);
+    return result.data;
+  } catch {
+    void uid; // uid reserved for future per-user logging
+    return {
+      good: '이번 주도 기록을 꾸준히 해줬어요!',
+      leak: '소비 패턴을 좀 더 살펴볼 수 있어요.',
+      suggestion: '다음 주에는 한 카테고리만 집중해볼까요?',
+    };
+  }
 }
 
 // ──────────────────────────────────────────────

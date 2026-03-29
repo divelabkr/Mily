@@ -35,13 +35,14 @@ export function ParentReplyContainer() {
     }
   };
 
+  const cardAny = card as any;
   return (
     <ParentReplyScreen
-      requestType={card.type ?? '요청'}
-      requestAmount={card.amount}
-      aiBufferedContent={card.bufferedText ?? card.reason ?? ''}
+      requestType={card.requestType ?? cardAny.type ?? '요청'}
+      requestAmount={cardAny.amount}
+      aiBufferedContent={card.bufferedText ?? cardAny.reason ?? ''}
       onAccept={handleAccept}
-      onCounter={() => router.push({ pathname: '/(adult)/counter-proposal' as any, params: { cardId: card.id, amount: card.amount } })}
+      onCounter={() => router.push({ pathname: '/(adult)/counter-proposal' as any, params: { cardId: card.id, amount: cardAny.amount } })}
       onDecline={handleDecline}
       onBack={() => router.back()}
     />

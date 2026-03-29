@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '../engines/auth/authStore';
 import { usePlanStore } from '../engines/plan/planStore';
-import { useCheckInStore } from '../engines/checkin/checkinStore';
+import { useCheckInStore, getWeeklyChoiceTotal } from '../engines/checkin/checkinStore';
+
 import { loadLatestPlan } from '../engines/plan/planService';
 import { loadWeeklyCheckIns } from '../engines/checkin/checkinService';
 import { detectCurrentOccasion, OCCASION_LABELS } from '../engines/income/cashGiftService';
@@ -23,7 +24,6 @@ export function useHomeData(): HomeData & { refresh: () => void } {
   const user = useAuthStore((s) => s.user);
   const currentPlan = usePlanStore((s) => s.currentPlan);
   const weeklyCheckIns = useCheckInStore((s) => s.weeklyCheckIns);
-  const getWeeklyChoiceTotal = useCheckInStore((s) => s.getWeeklyChoiceTotal);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function useHomeData(): HomeData & { refresh: () => void } {
   }, [fetchData]);
 
   const weekBudget = currentPlan ? Math.round(currentPlan.totalBudget / 4) : 0;
-  const weekSpent = getWeeklyChoiceTotal?.() ?? 0;
+  const weekSpent = getWeeklyChoiceTotal(weeklyCheckIns);
 
   // 명절 감지
   const occasion = detectCurrentOccasion();

@@ -150,11 +150,10 @@ describe('Integration: Life events + feature flags', () => {
     expect(types.has('family_decision')).toBe(true);
   });
 
-  test('9. getMonthlyEvent returns event not in recent list', () => {
-    const recent = ['LE-01', 'LE-02'];
-    const event = getMonthlyEvent('B', recent);
+  test('9. getMonthlyEvent returns a Promise', async () => {
+    const event = await getMonthlyEvent('family-1', '2026-03');
     expect(event).toBeDefined();
-    expect(recent).not.toContain(event!.id);
+    expect(event).toHaveProperty('id');
   });
 
   test('10. All new feature flags default to false', () => {

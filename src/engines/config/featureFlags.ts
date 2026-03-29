@@ -65,7 +65,7 @@ export const DEFAULT_FLAGS: Record<string, boolean | string> = {
   // 성년 전환
   graduation_celebration_enabled: true,
   graduation_coupon_enabled: false,
-  graduation_coupon_value: 5000,
+  graduation_coupon_value: '5000',
   // 기능 5~6
   smart_budget_enabled: true,
   daily_checkin_enabled: true,

@@ -100,7 +100,7 @@ describe('financialStatementService', () => {
   });
 
   test('13. getStatementHistory: returns empty array when no docs', async () => {
-    const result = await getStatementHistory('user1');
+    const result = await getStatementHistory('user1', 12);
     expect(result).toEqual([]);
   });
 

@@ -2,11 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useAuthStore } from '../../src/engines/auth/authStore';
-import { calculateCashFlowFromData, CashFlowData } from '../../src/engines/cashflow/cashFlowEngine';
+import { calculateCashFlowFromData, CashFlowData, OutflowItem } from '../../src/engines/cashflow/cashFlowEngine';
 import { useCheckInStore } from '../../src/engines/checkin/checkinStore';
 import { CashFlowScreen } from '../../src/screens/cashflow/CashFlowScreen';
 import { SkeletonList } from '../../src/components/ui/SkeletonCard';
 import { EmptyState } from '../../src/components/ui/EmptyState';
+import { getWeekId } from '../../src/utils/dateUtils';
 
 export default function CashflowRoute() {
   const user = useAuthStore((s) => s.user);
@@ -14,11 +15,17 @@ export default function CashflowRoute() {
   const [data, setData] = useState<CashFlowData | null>(null);
 
   useEffect(() => {
-    if (weeklyCheckIns.length > 0) {
-      const result = calculateCashFlowFromData(weeklyCheckIns, []);
+    if (weeklyCheckIns.length > 0 && user?.uid) {
+      const outflows: OutflowItem[] = weeklyCheckIns.map((c) => ({
+        categoryId: c.categoryId,
+        spendType: c.spendType ?? 'choice',
+        amount: c.amount,
+        assetType: 'consumable' as const,
+      }));
+      const result = calculateCashFlowFromData(user.uid, getWeekId(), [], outflows);
       setData(result);
     }
-  }, [weeklyCheckIns]);
+  }, [weeklyCheckIns, user?.uid]);
 
   if (!data) {
     return (

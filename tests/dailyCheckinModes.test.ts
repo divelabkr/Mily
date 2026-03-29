@@ -23,7 +23,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 // remoteConfigService 모킹
-const mockGetString = jest.fn(() => 'standard');
+const mockGetString = jest.fn((_key?: string) => 'standard');
 jest.mock('../src/engines/config/remoteConfigService', () => ({
   getString: (key: string) => mockGetString(key),
 }));

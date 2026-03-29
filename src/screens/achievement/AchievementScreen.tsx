@@ -5,7 +5,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView,
 } from 'react-native';
 import { theme } from '../../ui/theme';
-import { Achievement } from '../../engines/achievement/achievementService';
+import { Achievement } from '../../engines/achievement/achievementTypes';
 
 type AchievementFilter = 'all' | 'unlocked' | 'locked' | 'hidden';
 

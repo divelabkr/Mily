@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
@@ -34,6 +34,8 @@ export default function RegisterScreen() {
 
   return (
     <ScreenLayout>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <Text style={styles.title}>{t('auth_register')}</Text>
 
@@ -79,6 +81,8 @@ export default function RegisterScreen() {
           style={styles.backButton}
         />
       </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenLayout>
   );
 }

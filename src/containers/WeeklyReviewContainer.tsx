@@ -24,25 +24,27 @@ export function WeeklyReviewContainer() {
   const weekId = getWeekId(new Date());
 
   useEffect(() => {
+    let mounted = true;
     async function load() {
-      if (!user?.uid) return;
+      if (!user?.uid || !currentPlan) return;
       setLoading(true);
       try {
-        const result = await generateReview(user.uid, weekId, weeklyCheckIns, currentPlan);
-        if (result) {
+        const result = await generateReview(user.uid, currentPlan, weeklyCheckIns);
+        if (mounted && result) {
           setReview({
-            highlight: result.highlight ?? '이번 주 기록을 잘 남겼어요',
-            curious: result.curious ?? '다음 주에는 어떤 변화가 있을까요?',
-            nextStep: result.nextStep ?? '작은 습관 하나를 이어가봐요',
+            highlight: result.good ?? '이번 주 기록을 잘 남겼어요',
+            curious: result.leak ?? '다음 주에는 어떤 변화가 있을까요?',
+            nextStep: result.suggestion ?? '작은 습관 하나를 이어가봐요',
           });
         }
-      } catch (e: any) {
-        setError(e?.message ?? '회고를 불러오지 못했어요');
+      } catch (e: unknown) {
+        if (mounted) setError((e as Error)?.message ?? '회고를 불러오지 못했어요');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     load();
+    return () => { mounted = false; };
   }, [user?.uid, weekId]);
 
   if (loading) {

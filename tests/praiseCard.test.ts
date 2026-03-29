@@ -36,14 +36,14 @@ describe('praiseCardStore', () => {
   });
 
   it('addCard: 최신 순서(앞에 추가)', () => {
-    usePraiseCardStore.getState().addCard(makeCard({ id: 'old', type: 'thank_you' }));
-    usePraiseCardStore.getState().addCard(makeCard({ id: 'new', type: 'good_effort' }));
-    expect(usePraiseCardStore.getState().cards[0].id).toBe('new');
+    usePraiseCardStore.getState().addCard(makeCard({ cardId: 'old', type: 'thank_you' }));
+    usePraiseCardStore.getState().addCard(makeCard({ cardId: 'new', type: 'good_effort' }));
+    expect(usePraiseCardStore.getState().cards[0].cardId).toBe('new');
   });
 
   it('setCards: 전체 교체', () => {
-    usePraiseCardStore.getState().addCard(makeCard({ id: 'old' }));
-    usePraiseCardStore.getState().setCards([makeCard({ id: 'a' }), makeCard({ id: 'b' })]);
+    usePraiseCardStore.getState().addCard(makeCard({ cardId: 'old' }));
+    usePraiseCardStore.getState().setCards([makeCard({ cardId: 'a' }), makeCard({ cardId: 'b' })]);
     expect(usePraiseCardStore.getState().cards).toHaveLength(2);
   });
 

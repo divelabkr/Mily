@@ -25,7 +25,7 @@ jest.mock('firebase/firestore', () => ({
 }));
 const mockTrackEvent = jest.fn(() => Promise.resolve());
 jest.mock('../src/engines/analytics/analyticsService', () => ({
-  trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
+  trackEvent: (...args: any[]) => (mockTrackEvent as any)(...args),
 }));
 
 // ──────────────────────────────────────────────
@@ -211,9 +211,9 @@ describe('부모 알림 트리거', () => {
 
   it('부모 알림 메시지에 자녀 이름 포함', async () => {
     await notifyParentEarlyUnlock('지은', 'plan_simple');
-    const call = mockTrackEvent.mock.calls[0];
-    const props = call[1] as Record<string, string>;
-    expect(props.message).toContain('지은');
+    const call = (mockTrackEvent.mock.calls as any)[0];
+    const props = call?.[1] as Record<string, string>;
+    expect(props?.message).toContain('지은');
   });
 
   it('syncAgeBasedUnlocks: 신규 해금 기능 반환 + trackEvent 호출', async () => {

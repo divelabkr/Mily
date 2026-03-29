@@ -81,7 +81,7 @@ describe('lifeEventService', () => {
   });
 
   test('12. getMonthlyEvent returns a LifeEvent (async test)', async () => {
-    const event = await getMonthlyEvent('A');
+    const event = await getMonthlyEvent('A', '2026-03');
     expect(event).toBeDefined();
     expect(event).toHaveProperty('id');
     expect(event).toHaveProperty('type');

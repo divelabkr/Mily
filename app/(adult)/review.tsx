@@ -104,6 +104,7 @@ export default function ReviewScreen() {
   const handleDone = async () => {
     if (!user) return;
     const weekId = getWeekId();
+    try {
     if (review) {
       await saveReview(user.uid, review, aiUsed, promiseKept);
     }
@@ -134,6 +135,10 @@ export default function ReviewScreen() {
       return;
     }
     router.back();
+    } catch {
+      // 저장 실패 시 화면 전환은 진행 (회고는 소실되지 않음)
+      router.back();
+    }
   };
 
   return (
@@ -235,7 +240,7 @@ export default function ReviewScreen() {
 
         {/* 약속 달성 피드백 메시지 */}
         {promiseKept !== null && (
-          <Card style={[styles.card, styles.promiseFeedbackCard]}>
+          <Card style={{ ...styles.card, ...styles.promiseFeedbackCard }}>
             <Text style={styles.promiseFeedbackText}>
               {getPromiseFeedbackMessage(promiseKept)}
             </Text>

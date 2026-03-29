@@ -16,6 +16,7 @@ export default function PromiseRoute() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
     async function load() {
       if (!user?.familyId || !user?.uid) return;
       setLoading(true);
@@ -24,15 +25,17 @@ export default function PromiseRoute() {
           getActiveContracts(user.familyId),
           getScore(user.uid),
         ]);
+        if (!mounted) return;
         setContracts(c);
         setTrustLevel(score.level);
-      } catch (e: any) {
-        setError(e?.message ?? '약속 기록을 불러오지 못했어요');
+      } catch (e: unknown) {
+        if (mounted) setError((e as Error)?.message ?? '약속 기록을 불러오지 못했어요');
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     load();
+    return () => { mounted = false; };
   }, [user?.familyId, user?.uid]);
 
   if (loading) {

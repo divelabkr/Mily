@@ -14,6 +14,7 @@ export default function ChildPromiseRoute() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     async function load() {
       if (!user?.familyId || !user?.uid) return;
       setLoading(true);
@@ -22,13 +23,17 @@ export default function ChildPromiseRoute() {
           getActiveContracts(user.familyId),
           getScore(user.uid),
         ]);
+        if (!mounted) return;
         setContracts(c);
         setTrustLevel(score.level);
-      } catch {} finally {
-        setLoading(false);
+      } catch {
+        // 에러 무시 — 빈 목록 표시
+      } finally {
+        if (mounted) setLoading(false);
       }
     }
     load();
+    return () => { mounted = false; };
   }, [user?.familyId, user?.uid]);
 
   if (loading) {

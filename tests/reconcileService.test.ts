@@ -30,9 +30,9 @@ const mockDoc = jest.fn(() => ({ id: 'mock-ref' }));
 const mockServerTimestamp = jest.fn(() => 'SERVER_TS');
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
-  setDoc: (...args: unknown[]) => mockSetDoc(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
+  setDoc: (...args: any[]) => (mockSetDoc as any)(...args),
   collection: jest.fn(() => ({})),
   getDocs: jest.fn().mockResolvedValue({ docs: [] }),
   serverTimestamp: () => mockServerTimestamp(),
@@ -65,7 +65,7 @@ function makeCheckIn(
     checkInId: 'cid-' + Math.random(),
     uid: 'uid-test',
     weekId: '2026-W09',
-    categoryId,
+    categoryId: categoryId as any,
     amount,
     spendType,
     emotionTag: null,

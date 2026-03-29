@@ -10,9 +10,9 @@ jest.mock('../src/engines/billing/billingService', () => ({
 const { isPaidPlan } = require('../src/engines/billing/billingService');
 
 const mockCheckIns = [
-  { id: '1', uid: 'u', weekId: getWeekId(), categoryId: 'food', amount: 1000, createdAt: Date.now() },
-  { id: '2', uid: 'u', weekId: '2026-W01', categoryId: 'food', amount: 2000, createdAt: Date.now() },
-  { id: '3', uid: 'u', weekId: '2025-W50', categoryId: 'hobby', amount: 3000, createdAt: Date.now() },
+  { checkInId: '1', uid: 'u', weekId: getWeekId(), categoryId: 'food' as const, amount: 1000, createdAt: Date.now() },
+  { checkInId: '2', uid: 'u', weekId: '2026-W01', categoryId: 'food' as const, amount: 2000, createdAt: Date.now() },
+  { checkInId: '3', uid: 'u', weekId: '2025-W50', categoryId: 'hobby' as const, amount: 3000, createdAt: Date.now() },
 ];
 
 describe('timeLock', () => {

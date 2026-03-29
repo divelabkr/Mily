@@ -9,11 +9,11 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,
   query,
   where,
 } from 'firebase/firestore';
-import { getFirebaseDb } from '../../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { getFirebaseDb, getFirebaseFunctions } from '../../lib/firebase';
 import { capture } from '../monitoring/posthogService';
 import { notifyCouponReceived, notifyParentCouponAlert } from '../notification/notificationService';
 import type {
@@ -131,6 +131,7 @@ export async function sendCoupon(
     sentAt: now.getTime(),
     expiresAt: expiresAt.getTime(),
     isVisible: true, // 도착 시 아이콘 표시
+    usedAt: undefined,
   };
 
   const db = getFirebaseDb();
@@ -215,10 +216,11 @@ export async function markAsUsed(uid: string, couponId: string): Promise<void> {
 
   const couponDoc = snap.data() as CouponDoc;
 
-  await updateDoc(couponRef, {
-    usedAt: Date.now(),
-    isVisible: false, // 아이콘 즉시 숨김
-  });
+  // 클라이언트 직접 쓰기 불가 → Functions callable
+  const useCouponFn = httpsCallable<{ uid: string; couponId: string }, { success: boolean }>(
+    getFirebaseFunctions(), 'useCoupon'
+  );
+  await useCouponFn({ uid, couponId });
 
   capture('coupon_used', { brand: couponDoc.brand, value: couponDoc.value });
 }
@@ -228,30 +230,18 @@ export async function markAsUsed(uid: string, couponId: string): Promise<void> {
 // ──────────────────────────────────────────────
 
 export async function checkAndExpireCoupons(uid: string): Promise<void> {
-  const db = getFirebaseDb();
-  const snap = await getDocs(collection(db, 'users', uid, 'coupons'));
-
-  const now = Date.now();
-  const updates: Promise<void>[] = [];
-
-  snap.forEach((d) => {
-    const couponDoc = d.data() as CouponDoc;
-    if (
-      couponDoc.isVisible &&
-      !couponDoc.usedAt &&
-      couponDoc.expiresAt <= now
-    ) {
-      updates.push(
-        updateDoc(doc(db, 'users', uid, 'coupons', couponDoc.couponId), {
-          isVisible: false,
-        }).then(() => {
-          capture('coupon_expired');
-        })
-      );
+  // 클라이언트 직접 쓰기 불가 → Functions callable
+  try {
+    const expireFn = httpsCallable<{ uid: string }, { expired: number }>(
+      getFirebaseFunctions(), 'expireCoupons'
+    );
+    const res = await expireFn({ uid });
+    if ((res.data.expired ?? 0) > 0) {
+      capture('coupon_expired');
     }
-  });
-
-  await Promise.all(updates);
+  } catch {
+    // 네트워크 오류 시 무시 (다음 앱 시작 시 재시도)
+  }
 }
 
 // ──────────────────────────────────────────────

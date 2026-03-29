@@ -23,7 +23,7 @@ jest.mock('../src/engines/monitoring/posthogService', () => ({
 // familyEnhanceService 모킹
 const mockGraduateToAdult = jest.fn().mockResolvedValue(undefined);
 jest.mock('../src/engines/family/familyEnhanceService', () => ({
-  graduateToAdult: (...args: unknown[]) => mockGraduateToAdult(...args),
+  graduateToAdult: (...args: any[]) => (mockGraduateToAdult as any)(...args),
   calcAgeAtDate: jest.requireActual('../src/engines/family/familyEnhanceService').calcAgeAtDate,
 }));
 
@@ -34,9 +34,9 @@ const mockDoc = jest.fn(() => ({ id: 'mock-ref' }));
 const mockServerTimestamp = jest.fn(() => 'SERVER_TS');
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
+  updateDoc: (...args: any[]) => (mockUpdateDoc as any)(...args),
   serverTimestamp: () => mockServerTimestamp(),
 }));
 

@@ -27,9 +27,9 @@ const mockDoc = jest.fn(() => ({ id: 'mock-ref' }));
 const mockCollection = jest.fn(() => ({}));
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  collection: (...args: unknown[]) => mockCollection(...args),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  collection: (...args: any[]) => (mockCollection as any)(...args),
+  getDocs: (...args: any[]) => (mockGetDocs as any)(...args),
   query: jest.fn((ref) => ref),
   orderBy: jest.fn(),
 }));

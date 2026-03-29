@@ -33,10 +33,10 @@ const mockDoc = jest.fn(() => ({ id: 'mock-user-ref' }));
 const mockDeleteField = jest.fn(() => 'DELETE_SENTINEL');
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  setDoc: (...args: unknown[]) => mockSetDoc(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  setDoc: (...args: any[]) => (mockSetDoc as any)(...args),
+  updateDoc: (...args: any[]) => (mockUpdateDoc as any)(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
   deleteField: () => mockDeleteField(),
 }));
 

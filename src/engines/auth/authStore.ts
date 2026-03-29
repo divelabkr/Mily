@@ -10,6 +10,7 @@ interface User {
   familyId?: string;
   onboardingComplete: boolean;
   pilotId?: string | null;
+  ageBand?: string;
   // Custom Claim — Firebase Admin으로만 부여. 클라이언트 수정 불가.
   isMaster: boolean;
 }

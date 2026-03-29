@@ -22,7 +22,7 @@ jest.mock('../src/engines/monitoring/posthogService', () => ({
 // pushTokenService 모킹
 const mockGetToken = jest.fn();
 jest.mock('../src/engines/notification/pushTokenService', () => ({
-  getToken: (...args: unknown[]) => mockGetToken(...args),
+  getToken: (...args: any[]) => (mockGetToken as any)(...args),
 }));
 
 // firestore 모킹
@@ -35,12 +35,12 @@ const mockCollection = jest.fn(() => ({}));
 const mockServerTimestamp = jest.fn(() => 'SERVER_TIMESTAMP');
 
 jest.mock('firebase/firestore', () => ({
-  doc: (...args: unknown[]) => mockDoc(...args),
-  collection: (...args: unknown[]) => mockCollection(...args),
-  getDoc: (...args: unknown[]) => mockGetDoc(...args),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  setDoc: (...args: unknown[]) => mockSetDoc(...args),
+  doc: (...args: any[]) => (mockDoc as any)(...args),
+  collection: (...args: any[]) => (mockCollection as any)(...args),
+  getDoc: (...args: any[]) => (mockGetDoc as any)(...args),
+  getDocs: (...args: any[]) => (mockGetDocs as any)(...args),
+  updateDoc: (...args: any[]) => (mockUpdateDoc as any)(...args),
+  setDoc: (...args: any[]) => (mockSetDoc as any)(...args),
   serverTimestamp: () => mockServerTimestamp(),
 }));
 

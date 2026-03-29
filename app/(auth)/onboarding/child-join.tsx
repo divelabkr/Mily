@@ -7,6 +7,8 @@ import {
   Alert,
   ScrollView,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +20,6 @@ import { useAuthStore } from '../../../src/engines/auth/authStore';
 import { joinFamilyByCode } from '../../../src/engines/family/familyService';
 import {
   isUnder14,
-  createConsent,
   requestGuardianConsent,
   isValidGuardianEmail,
   isValidGuardianPhone,
@@ -67,14 +68,9 @@ export default function ChildJoinScreen() {
         return;
       }
 
-      // 14세 미만: 동의 생성 + 법정대리인 알림 요청
+      // 14세 미만: 법정대리인 동의 요청 생성 (consent_requests)
+      // 실제 consent 문서는 부모 승인 후 Functions가 생성
       if (needsConsent) {
-        await createConsent(
-          family.ownerUid,
-          user.uid,
-          user.displayName,
-          birthYearNum
-        );
         await requestGuardianConsent(user.uid, {
           childName: user.displayName,
           birthYear: birthYearNum,
@@ -94,7 +90,8 @@ export default function ChildJoinScreen() {
 
   return (
     <ScreenLayout>
-      <ScrollView style={styles.scroll}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{t('onboarding_child_invite_title')}</Text>
 
         <TextInput
@@ -165,6 +162,7 @@ export default function ChildJoinScreen() {
           loading={loading}
         />
       </View>
+      </KeyboardAvoidingView>
     </ScreenLayout>
   );
 }

@@ -5,6 +5,9 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
@@ -43,6 +46,11 @@ export default function LoginScreen() {
 
   return (
     <ScreenLayout>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
         <Text style={styles.title}>Mily</Text>
         <Text style={styles.slogan}>미루지 않는 경제 대화, Mily</Text>
@@ -96,9 +104,14 @@ export default function LoginScreen() {
           style={styles.registerButton}
         />
       </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenLayout>
   );
 }
+
+// re-export so tests can import cleanly
+export {};
 
 const styles = StyleSheet.create({
   container: {

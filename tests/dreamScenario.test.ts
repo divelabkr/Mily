@@ -63,7 +63,7 @@ describe('dreamScenarioService', () => {
   test('calculateTimeToAchieve with monthlySaving=0 returns Infinity', () => {
     const scenario = getDreamById('DS-02');
     expect(scenario).toBeDefined();
-    const months = calculateTimeToAchieve(scenario!.price, 0);
+    const months = calculateTimeToAchieve(scenario!, 0);
     expect(months).toBe(Infinity);
   });
 

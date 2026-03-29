@@ -14,7 +14,6 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { getFirebaseDb } from '../../lib/firebase';
-import { withGateChain } from '../../dae/withGateChain';
 
 // ── 타입 ──────────────────────────────────────
 
@@ -73,8 +72,7 @@ export function detectCurrentOccasion(): CashGiftOccasion | null {
 
 const COLLECTION = 'cash_gifts';
 
-export const recordCashGift = withGateChain(
-  async (input: Omit<CashGiftEntry, 'id' | 'recordedAt'>): Promise<CashGiftEntry> => {
+export async function recordCashGift(input: Omit<CashGiftEntry, 'id' | 'recordedAt'>): Promise<CashGiftEntry> {
     const db = getFirebaseDb();
     const ref = doc(collection(db, COLLECTION));
     const entry: CashGiftEntry = {
@@ -84,8 +82,7 @@ export const recordCashGift = withGateChain(
     };
     await setDoc(ref, entry);
     return entry;
-  }
-);
+}
 
 export async function getCashGifts(uid: string): Promise<CashGiftEntry[]> {
   const db = getFirebaseDb();

@@ -8,14 +8,17 @@ import {
   orderBy,
   serverTimestamp,
 } from 'firebase/firestore';
-import { getFirebaseDb } from '../../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { getFirebaseDb, getFirebaseFunctions } from '../../lib/firebase';
 import {
   RequestCard,
   RequestStatus,
   RequestType,
   useRequestCardStore,
 } from './requestCardStore';
-import { bufferRequestText } from '../ai/aiToneService';
+
+// RequestCardType alias — backwards compat for containers importing this name
+export type { RequestType as RequestCardType } from './requestCardStore';
 import { notifyRequestCardReceived } from '../notification/notificationService';
 import { capture } from '../monitoring/posthogService';
 
@@ -33,8 +36,18 @@ export async function sendRequestCard(
   requestType: RequestType,
   senderName?: string
 ): Promise<RequestCard> {
-  // AI 완충
-  const { bufferedText } = await bufferRequestText({ originalText, requestType });
+  // AI 완충 — Firebase Functions callable (API 키 서버 보호)
+  let bufferedText = originalText;
+  try {
+    const bufferFn = httpsCallable<
+      { originalText: string; requestType: RequestType },
+      { bufferedText: string }
+    >(getFirebaseFunctions(), 'bufferRequestCard');
+    const res = await bufferFn({ originalText, requestType });
+    bufferedText = res.data.bufferedText || originalText;
+  } catch {
+    // fallback: 원문 그대로
+  }
 
   const colRef = collection(getFirebaseDb(), 'request_cards', familyId);
   const docRef = await addDoc(colRef, {

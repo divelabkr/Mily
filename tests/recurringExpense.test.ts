@@ -26,10 +26,10 @@ const mockDeleteDoc = jest.fn(() => Promise.resolve());
 jest.mock('firebase/firestore', () => ({
   collection: jest.fn(),
   doc: jest.fn(),
-  addDoc: (...args: unknown[]) => mockAddDoc(...args),
+  addDoc: (...args: any[]) => (mockAddDoc as any)(...args),
   getDoc: jest.fn(),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
+  getDocs: (...args: any[]) => (mockGetDocs as any)(...args),
+  deleteDoc: (...args: any[]) => (mockDeleteDoc as any)(...args),
   serverTimestamp: jest.fn(() => ({ _type: 'serverTimestamp' })),
   orderBy: jest.fn(),
   query: jest.fn(),

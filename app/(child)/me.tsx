@@ -28,11 +28,13 @@ export default function ChildMeScreen() {
   const updateSettingsStore = useRewardStore((s) => s.updateSettings);
 
   useEffect(() => {
+    let mounted = true;
     if (user?.uid && user?.familyId) {
-      loadPrivacySettings(user.familyId, user.uid).then(setPrivacy);
+      loadPrivacySettings(user.familyId, user.uid).then((p) => { if (mounted) setPrivacy(p); });
     } else if (user?.uid) {
-      setPrivacy(defaultPrivacySettings(user.uid, ''));
+      if (mounted) setPrivacy(defaultPrivacySettings(user.uid, ''));
     }
+    return () => { mounted = false; };
   }, [user]);
 
   // 쿠폰 알림 설정 로드

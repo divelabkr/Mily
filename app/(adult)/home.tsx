@@ -82,6 +82,20 @@ export default function HomeScreen() {
     unlockedAchievements: userAchievements.map((ua) => ua.achievementId),
     todayCheckInCount: 0,
     todayCheckInAmounts: [],
+    praiseCardsReceived: 0,
+    giveCheckIns: 0,
+    daysSinceLastCheckIn: 0,
+    economyTipsViewed: 0,
+    dailyCheckInStreak: 0,
+    requestCardsResolved: 0,
+    savingsCheckIns: 0,
+    choiceSpendDecreased: false,
+    contractsCompleted: 0,
+    ageBandUpgraded: false,
+    isGraduated: false,
+    freedomIndex: 0,
+    familyBankCompleted: false,
+    totalMilyXp: 0,
   }), [user, plan, checkIns, userAchievements]);
 
   // "거의 다 왔어요" — 이번 주에 아직 표시 안 했을 때만
