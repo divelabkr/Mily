@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
@@ -14,6 +22,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const isValid =
@@ -21,12 +30,20 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!isValid) return;
+    setError('');
     setLoading(true);
+    console.log('[SignUp] 시도:', email);
     try {
+      console.log('[SignUp] signUpWithEmail 호출 시작');
       await signUpWithEmail(email, password, name.trim(), 'individual');
+      console.log('[SignUp] 성공 → AuthGate가 onboarding으로 이동');
       // 가입 성공 → AuthGate가 onboarding/role-select로 자동 이동
     } catch (e: unknown) {
-      Alert.alert(t('auth_register'), getAuthErrorMessage((e as { code?: string })?.code ?? ''));
+      const code = (e as { code?: string })?.code ?? '';
+      const message = (e as { message?: string })?.message ?? '';
+      console.log('[SignUp] 에러 코드:', code);
+      console.log('[SignUp] 에러 메시지:', message);
+      setError(getAuthErrorMessage(code));
     } finally {
       setLoading(false);
     }
@@ -34,53 +51,65 @@ export default function RegisterScreen() {
 
   return (
     <ScreenLayout>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-      <View style={styles.container}>
-        <Text style={styles.title}>{t('auth_register')}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <Text style={styles.title}>{t('auth_register')}</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('onboarding_child_name_placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          value={name}
-          onChangeText={setName}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder={t('onboarding_child_name_placeholder')}
+              placeholderTextColor={theme.colors.textSecondary}
+              value={name}
+              onChangeText={(text) => { setName(text); setError(''); }}
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth_email_placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder={t('auth_email_placeholder')}
+              placeholderTextColor={theme.colors.textSecondary}
+              value={email}
+              onChangeText={(text) => { setEmail(text); setError(''); }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth_password_placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+            <TextInput
+              style={styles.input}
+              placeholder={t('auth_password_placeholder')}
+              placeholderTextColor={theme.colors.textSecondary}
+              value={password}
+              onChangeText={(text) => { setPassword(text); setError(''); }}
+              secureTextEntry
+            />
 
-        <Button
-          title={t('auth_register')}
-          onPress={handleRegister}
-          disabled={!isValid}
-          loading={loading}
-        />
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-        <Button
-          title={t('common_back')}
-          onPress={() => router.back()}
-          variant="outline"
-          style={styles.backButton}
-        />
-      </View>
+            <Button
+              title={t('auth_register')}
+              onPress={handleRegister}
+              disabled={!isValid || loading}
+              loading={loading}
+            />
+
+            <Button
+              title={t('common_back')}
+              onPress={() => router.back()}
+              variant="outline"
+              style={styles.backButton}
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </ScreenLayout>
@@ -110,6 +139,18 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     backgroundColor: theme.colors.surface,
     marginBottom: theme.spacing[3],
+  },
+  errorContainer: {
+    backgroundColor: '#FFF0ED',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 4,
+    marginBottom: theme.spacing[3],
+  },
+  errorText: {
+    color: '#E8503A',
+    fontSize: 13,
+    textAlign: 'center',
   },
   backButton: {
     marginTop: theme.spacing[3],

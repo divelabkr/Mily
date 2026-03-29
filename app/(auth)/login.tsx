@@ -88,11 +88,18 @@ export default function LoginScreen() {
     }
     setError('');
     setLoading(true);
+    console.log('[Login] 시도:', email.trim());
     try {
+      console.log('[Login] signInWithEmail 호출 시작');
       await signInWithEmail(email.trim(), password);
+      console.log('[Login] 성공 → AuthGate가 리다이렉트');
       // AuthGate가 자동으로 리다이렉트
     } catch (e: unknown) {
-      setError(getAuthErrorMessage((e as { code?: string })?.code ?? ''));
+      const code = (e as { code?: string })?.code ?? '';
+      const message = (e as { message?: string })?.message ?? '';
+      console.log('[Login] 에러 코드:', code);
+      console.log('[Login] 에러 메시지:', message);
+      setError(getAuthErrorMessage(code));
     } finally {
       setLoading(false);
     }
