@@ -33,6 +33,8 @@ export function getAuthErrorMessage(code: string): string {
       return '네트워크 연결을 확인해주세요';
     case 'auth/user-disabled':
       return '사용이 중단된 계정이에요';
+    case 'auth/operation-not-allowed':
+      return 'Firebase 콘솔에서 이메일/비밀번호 로그인을 활성화해야 해요.';
     default:
       return '문제가 생겼어요. 다시 시도해볼까요?';
   }

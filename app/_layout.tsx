@@ -93,7 +93,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!user && !inAuth) {
       router.replace('/(auth)/login');
     } else if (user && inAuth) {
-      if (!user.onboardingComplete) {
+      // 마스터 계정: 온보딩 건너뛰고 바로 홈
+      if (user.isMaster) {
+        router.replace('/(adult)/home');
+      } else if (!user.onboardingComplete) {
         router.replace('/(auth)/onboarding/role-select');
       } else if (user.role === 'child') {
         router.replace('/(child)/home');
