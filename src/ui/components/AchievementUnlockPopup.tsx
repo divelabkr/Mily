@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -119,12 +120,12 @@ const styles = StyleSheet.create({
     right: 16,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.card,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
     elevation: 8,
     overflow: 'hidden',
+    ...Platform.select({
+      web: { boxShadow: '0px -2px 8px rgba(0,0,0,0.12)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.12, shadowRadius: 8 },
+    }),
   },
   rarityBar: {
     height: 4,

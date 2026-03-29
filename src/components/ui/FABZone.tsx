@@ -1,7 +1,7 @@
 // FABZone.tsx — 플로팅 액션 버튼 영역
 // 메인 1개 + 보조 최대 3개
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { theme } from '../../ui/theme';
 
 export interface FABAction {
@@ -20,7 +20,7 @@ export function FABZone({ mainAction, secondaryActions = [] }: FABZoneProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <View style={styles.container} pointerEvents="box-none">
+    <View style={[styles.container, { pointerEvents: 'box-none' }]}>
       {expanded && secondaryActions.map((action, i) => (
         <TouchableOpacity
           key={action.key}
@@ -58,11 +58,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
     elevation: 6,
+    ...Platform.select({
+      web: { boxShadow: '0px 4px 8px rgba(0,0,0,0.18)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8 },
+    }),
   },
   mainFabText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   secondaryFab: {
@@ -74,11 +74,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     height: 44,
     paddingHorizontal: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
     elevation: 3,
+    ...Platform.select({
+      web: { boxShadow: '0px 2px 4px rgba(0,0,0,0.10)' },
+      default: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+    }),
   },
   fabEmoji: { fontSize: 16, marginRight: 6 },
   secondaryLabel: { fontSize: 14, color: theme.milyColors.brownDark, fontWeight: '500' },

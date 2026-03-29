@@ -5,7 +5,7 @@ import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
 import { isValidEmail, isValidPassword } from '../../src/utils/validators';
-import { signInWithEmail } from '../../src/engines/auth/authService';
+import { signInWithEmail, getAuthErrorMessage } from '../../src/engines/auth/authService';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
@@ -24,9 +24,7 @@ export default function LoginScreen() {
       await signInWithEmail(email, password);
       // AuthGate가 자동으로 리다이렉트
     } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : t('common_error');
-      Alert.alert(t('auth_login'), msg);
+      Alert.alert(t('auth_login'), getAuthErrorMessage(e));
     } finally {
       setLoading(false);
     }

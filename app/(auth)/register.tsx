@@ -6,7 +6,7 @@ import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
 import { isValidEmail, isValidPassword } from '../../src/utils/validators';
-import { signUpWithEmail } from '../../src/engines/auth/authService';
+import { signUpWithEmail, getAuthErrorMessage } from '../../src/engines/auth/authService';
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -26,9 +26,7 @@ export default function RegisterScreen() {
       await signUpWithEmail(email, password, name.trim(), 'individual');
       // 가입 성공 → AuthGate가 onboarding/role-select로 자동 이동
     } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : t('common_error');
-      Alert.alert(t('auth_register'), msg);
+      Alert.alert(t('auth_register'), getAuthErrorMessage(e));
     } finally {
       setLoading(false);
     }

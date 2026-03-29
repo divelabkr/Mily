@@ -113,34 +113,3 @@ export async function loadRequestCards(familyId: string): Promise<RequestCard[]>
   return cards;
 }
 
-// ──────────────────────────────────────────────
-// DAE 래핑 버전 (신규 화면에서 이걸 쓰면 됨)
-// 기존 함수는 절대 수정 안 함
-// ──────────────────────────────────────────────
-
-import { sendCardSkill } from '../../dae/skills/mily.request.send-card';
-
-export async function sendRequestCardViaDAE(
-  input: {
-    familyId: string;
-    fromUid: string;
-    toUid: string;
-    originalText: string;
-    requestType: RequestType;
-    senderName?: string;
-  },
-  callerId: string
-): Promise<RequestCard> {
-  const result = await sendCardSkill(
-    input,
-    { id: callerId, role: 'child' },
-    'request_card_send'
-  );
-
-  if (!result.success) {
-    console.warn(`[DAE] sendRequestCard blocked at ${result.gateId}: ${result.reason}`);
-    throw new Error(result.reason);
-  }
-
-  return result.output as RequestCard;
-}

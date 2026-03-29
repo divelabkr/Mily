@@ -38,7 +38,7 @@ export function getFirebaseAuth(): Auth {
 
 export function getFirebaseDb(): Firestore {
   if (!_db) {
-    _db = getFirestore(getApp_());
+    _db = getFirestore(getApp_(), 'default-ver1');
   }
   return _db;
 }
