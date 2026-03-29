@@ -99,4 +99,27 @@ export const Events = {
   referralSent: () => trackEvent('referral_sent'),
 
   referralAccepted: () => trackEvent('referral_accepted'),
+
+  appOpened: () => trackEvent('app_opened'),
+
+  firstCheckin: (week: string) =>
+    trackEvent('first_checkin', { week }),
+
+  goalSet: (goalName: string, targetAmount: number) =>
+    trackEvent('goal_set', { goalName, targetAmount }),
+
+  goalAchieved: (goalName: string) =>
+    trackEvent('goal_achieved', { goalName }),
+
+  cashGiftRecorded: (amount: number) =>
+    trackEvent('cash_gift_recorded', { amount }),
+
+  requestCardApproved: (type: string) =>
+    trackEvent('request_card_approved', { type }),
+
+  requestCardDeclined: (type: string) =>
+    trackEvent('request_card_declined', { type }),
+
+  weeklyReviewDone: (week: string) =>
+    trackEvent('weekly_review_done', { week }),
 } as const;

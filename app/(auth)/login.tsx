@@ -8,8 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { getFirebaseAuth } from '../../src/lib/firebase';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
 import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
@@ -22,6 +25,23 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('이메일을 먼저 입력해주세요');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(getFirebaseAuth(), email.trim());
+      setError('');
+      Alert.alert(
+        '이메일을 보냈어요',
+        `${email.trim()}로 비밀번호 재설정 링크를 보냈어요`
+      );
+    } catch (e: unknown) {
+      setError(getAuthErrorMessage((e as { code?: string })?.code ?? ''));
+    }
+  };
 
   const handleLogin = async () => {
     if (!email.trim()) {
@@ -95,6 +115,14 @@ export default function LoginScreen() {
           loading={loading}
           style={styles.loginButton}
         />
+
+        <TouchableOpacity
+          onPress={handleForgotPassword}
+          style={styles.forgotButton}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
+        </TouchableOpacity>
 
         <Button
           title="가입하기"
@@ -176,6 +204,15 @@ const styles = StyleSheet.create({
   },
   loginButton: {
     marginTop: theme.spacing[2],
+  },
+  forgotButton: {
+    alignSelf: 'center',
+    marginTop: theme.spacing[3],
+  },
+  forgotText: {
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    textDecorationLine: 'underline',
   },
   registerButton: {
     marginTop: theme.spacing[3],
