@@ -7,9 +7,12 @@
       { "source": "/terms", "destination": "/terms-of-service.html" }
     ]
   },
-  "firestore": {
-    "rules": "firestore.rules"
-  },
+  "firestore": [
+    {
+      "database": "default-ver1",
+      "rules": "firestore.rules"
+    }
+  ],
   "functions": [
     {
       "source": "functions",

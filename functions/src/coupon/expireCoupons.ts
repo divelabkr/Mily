@@ -9,7 +9,7 @@ export const expireCoupons = onCall(async (request) => {
     throw new HttpsError('permission-denied', 'Forbidden');
   }
 
-  const db = getFirestore();
+  const db = getFirestore('default-ver1');
   const snap = await db.collection('users').doc(uid).collection('coupons').get();
   const now = Date.now();
 

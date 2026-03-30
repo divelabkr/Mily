@@ -9,7 +9,7 @@ export const useCoupon = onCall(async (request) => {
     throw new HttpsError('permission-denied', 'Forbidden');
   }
 
-  const db = getFirestore();
+  const db = getFirestore('default-ver1');
   const ref = db.collection('users').doc(uid).collection('coupons').doc(couponId);
   const snap = await ref.get();
   if (!snap.exists) throw new HttpsError('not-found', '쿠폰을 찾을 수 없습니다.');
