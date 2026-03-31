@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## [1.14.2] - 2026.03.31
+
+### 🐛 버그 수정
+- 체크인 2-mode 토글 및 저장 버튼, my.tsx 라우팅 문제 해결
+- 배지 수집 경로 오류 및 Admin SDK 초기화로 인한 500 에러 수정
+- 온보딩 플로우 중 AuthGate가 역할 선택 페이지로 잘못 리다이렉트되는 문제 해결
+- onAuthStateChanged와 Firestore 토큰 주입 간의 경쟁 상태(race condition) 해결
+- Firestore 규칙 배포 문제 수정 및 AuthGate 디버그 로그 추가
+- getFirestore 'default-ver1' 명시 및 firebase.json 규칙 DB 타겟 수정
+
+---
+
 ## [1.14.1] - 2026.03.31
 
 ### 🐛 버그 수정
