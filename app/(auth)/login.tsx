@@ -13,10 +13,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { getFirebaseAuth } from '../../src/lib/firebase';
-import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
-import { Button } from '../../src/ui/components/Button';
 import { theme } from '../../src/ui/theme';
 import { signInWithEmail, getAuthErrorMessage } from '../../src/engines/auth/authService';
 
@@ -28,26 +27,21 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ── 비밀번호 재설정 모달 상태 ──
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
 
   const openResetModal = () => {
-    setResetEmail(email.trim()); // 로그인 폼 이메일 자동 채우기
+    setResetEmail(email.trim());
     setShowResetModal(true);
   };
 
   const handleForgotPassword = async () => {
     const target = resetEmail.trim();
-
     if (!target) {
-      Alert.alert('이메일 입력', '비밀번호를 재설정할 이메일을 입력해주세요', [
-        { text: '확인' },
-      ]);
+      Alert.alert('이메일 입력', '비밀번호를 재설정할 이메일을 입력해주세요', [{ text: '확인' }]);
       return;
     }
-
     setResetLoading(true);
     try {
       await sendPasswordResetEmail(getFirebaseAuth(), target, {
@@ -62,15 +56,11 @@ export default function LoginScreen() {
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code ?? '';
       const msg =
-        code === 'auth/user-not-found'
-          ? '등록되지 않은 이메일이에요'
-          : code === 'auth/invalid-email'
-          ? '이메일 형식이 맞지 않아요'
-          : code === 'auth/too-many-requests'
-          ? '잠시 후 다시 시도해주세요'
-          : code === 'auth/network-request-failed'
-          ? '네트워크 연결을 확인해주세요'
-          : '문제가 생겼어요. 다시 시도해주세요';
+        code === 'auth/user-not-found' ? '등록되지 않은 이메일이에요' :
+        code === 'auth/invalid-email' ? '이메일 형식이 맞지 않아요' :
+        code === 'auth/too-many-requests' ? '잠시 후 다시 시도해주세요' :
+        code === 'auth/network-request-failed' ? '네트워크 연결을 확인해주세요' :
+        '문제가 생겼어요. 다시 시도해주세요';
       Alert.alert('오류', msg, [{ text: '확인' }]);
     } finally {
       setResetLoading(false);
@@ -78,27 +68,14 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    if (!email.trim()) {
-      setError('이메일을 입력해주세요');
-      return;
-    }
-    if (!password) {
-      setError('비밀번호를 입력해주세요');
-      return;
-    }
+    if (!email.trim()) { setError('이메일을 입력해주세요'); return; }
+    if (!password) { setError('비밀번호를 입력해주세요'); return; }
     setError('');
     setLoading(true);
-    console.log('[Login] 시도:', email.trim());
     try {
-      console.log('[Login] signInWithEmail 호출 시작');
       await signInWithEmail(email.trim(), password);
-      console.log('[Login] 성공 → AuthGate가 리다이렉트');
-      // AuthGate가 자동으로 리다이렉트
     } catch (e: unknown) {
       const code = (e as { code?: string })?.code ?? '';
-      const message = (e as { message?: string })?.message ?? '';
-      console.log('[Login] 에러 코드:', code);
-      console.log('[Login] 에러 메시지:', message);
       setError(getAuthErrorMessage(code));
     } finally {
       setLoading(false);
@@ -106,7 +83,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <ScreenLayout>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -116,72 +93,85 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
-            <Text style={styles.title}>Mily</Text>
-            <Text style={styles.slogan}>미루지 않는 경제 대화, Mily</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="이메일"
-              placeholderTextColor={theme.colors.textSecondary}
-              value={email}
-              onChangeText={(text) => { setEmail(text); setError(''); }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            <View style={styles.passwordRow}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="비밀번호"
-                placeholderTextColor={theme.colors.textSecondary}
-                value={password}
-                onChangeText={(text) => { setPassword(text); setError(''); }}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword((v) => !v)}
-                accessibilityLabel={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-              >
-                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
-              </TouchableOpacity>
+            {/* 로고 영역 */}
+            <View style={styles.logoArea}>
+              <Text style={styles.logoEmoji}>🌱</Text>
+              <Text style={styles.logoText}>Mily</Text>
+              <Text style={styles.slogan}>돈 얘기가 대화가 되는 순간</Text>
             </View>
 
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
+            {/* 입력 영역 */}
+            <View style={styles.formArea}>
+              <TextInput
+                style={styles.input}
+                placeholder="이메일"
+                placeholderTextColor={theme.milyColors.brownLight}
+                value={email}
+                onChangeText={(text) => { setEmail(text); setError(''); }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <View style={styles.passwordRow}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="비밀번호"
+                  placeholderTextColor={theme.milyColors.brownLight}
+                  value={password}
+                  onChangeText={(text) => { setPassword(text); setError(''); }}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword((v) => !v)}
+                  accessibilityLabel={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                >
+                  <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                </TouchableOpacity>
               </View>
-            ) : null}
 
-            <Button
-              title="로그인"
-              onPress={handleLogin}
-              disabled={loading}
-              loading={loading}
-              style={styles.loginButton}
-            />
+              {error ? (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              ) : null}
 
-            <TouchableOpacity
-              onPress={openResetModal}
-              style={styles.forgotButton}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.loginButtonText}>로그인</Text>
+                )}
+              </TouchableOpacity>
 
-            <Button
-              title="가입하기"
-              onPress={() => router.push('/(auth)/register')}
-              variant="outline"
-              disabled={loading}
-              style={styles.registerButton}
-            />
+              <TouchableOpacity
+                onPress={openResetModal}
+                style={styles.forgotButton}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.registerButton}
+                onPress={() => router.push('/(auth)/register')}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.registerButtonText}>가입하기</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* ── 비밀번호 재설정 모달 ── */}
+      {/* 비밀번호 재설정 모달 */}
       <Modal
         visible={showResetModal}
         transparent
@@ -194,19 +184,17 @@ export default function LoginScreen() {
             <Text style={styles.modalSub}>
               가입할 때 사용한 이메일을 입력하면{'\n'}재설정 링크를 보내드려요.
             </Text>
-
             <TextInput
               style={styles.modalInput}
               value={resetEmail}
               onChangeText={setResetEmail}
               placeholder="이메일 주소"
-              placeholderTextColor={theme.colors.textSecondary}
+              placeholderTextColor={theme.milyColors.brownLight}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
             />
-
             <TouchableOpacity
               style={[styles.sendButton, resetLoading && styles.sendButtonDisabled]}
               onPress={handleForgotPassword}
@@ -219,7 +207,6 @@ export default function LoginScreen() {
                 <Text style={styles.sendButtonText}>재설정 링크 보내기</Text>
               )}
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setShowResetModal(false)}
@@ -230,95 +217,127 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
-    </ScreenLayout>
+    </SafeAreaView>
   );
 }
 
-// re-export so tests can import cleanly
 export {};
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: theme.milyColors.cream,
+  },
   container: {
     flex: 1,
+    paddingHorizontal: 28,
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing[4],
   },
-  title: {
-    fontSize: 32,
+  logoArea: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoEmoji: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  logoText: {
+    fontSize: 48,
     fontWeight: '700',
-    color: theme.colors.primary,
-    textAlign: 'center',
-    marginBottom: theme.spacing[2],
+    color: theme.milyColors.brownDark,
+    letterSpacing: -1,
+    marginBottom: 10,
   },
   slogan: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: theme.spacing[7],
+    fontSize: 15,
+    color: theme.milyColors.brownMid,
+    letterSpacing: 0.2,
+  },
+  formArea: {
+    gap: 0,
   },
   input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    height: 52,
+    borderWidth: 1.5,
+    borderColor: theme.milyColors.surface2,
     borderRadius: theme.borderRadius.input,
-    paddingHorizontal: theme.spacing[4],
+    paddingHorizontal: 16,
     fontSize: 16,
-    color: theme.colors.textPrimary,
+    color: theme.milyColors.brownDark,
     backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing[3],
+    marginBottom: 12,
   },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 1.5,
+    borderColor: theme.milyColors.surface2,
     borderRadius: theme.borderRadius.input,
     backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing[3],
+    marginBottom: 12,
   },
   passwordInput: {
     flex: 1,
-    height: 48,
-    paddingHorizontal: theme.spacing[4],
+    height: 52,
+    paddingHorizontal: 16,
     fontSize: 16,
-    color: theme.colors.textPrimary,
+    color: theme.milyColors.brownDark,
   },
   eyeButton: {
-    paddingHorizontal: theme.spacing[3],
-    height: 48,
+    paddingHorizontal: 14,
+    height: 52,
     justifyContent: 'center',
   },
-  eyeIcon: {
-    fontSize: 18,
-  },
+  eyeIcon: { fontSize: 18 },
   errorContainer: {
     backgroundColor: '#FFF0ED',
     borderRadius: 10,
     padding: 12,
-    marginTop: 4,
-    marginBottom: theme.spacing[2],
+    marginBottom: 12,
   },
   errorText: {
-    color: '#E8503A',
+    color: theme.milyColors.coral,
     fontSize: 13,
     textAlign: 'center',
   },
   loginButton: {
-    marginTop: theme.spacing[2],
+    height: 52,
+    borderRadius: theme.borderRadius.button,
+    backgroundColor: theme.milyColors.coral,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  loginButtonDisabled: { opacity: 0.55 },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   forgotButton: {
     alignSelf: 'center',
-    marginTop: theme.spacing[3],
+    marginBottom: 16,
   },
   forgotText: {
     fontSize: 13,
-    color: theme.colors.textSecondary,
+    color: theme.milyColors.brownMid,
     textDecorationLine: 'underline',
   },
   registerButton: {
-    marginTop: theme.spacing[3],
+    height: 52,
+    borderRadius: theme.borderRadius.button,
+    borderWidth: 1.5,
+    borderColor: theme.milyColors.coral,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  // ── 모달 ──
+  registerButtonText: {
+    color: theme.milyColors.coral,
+    fontSize: 17,
+    fontWeight: '600',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -327,7 +346,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modalContent: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.milyColors.cream,
     borderRadius: 20,
     padding: 28,
     width: '100%',
@@ -335,47 +354,43 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: theme.colors.textPrimary,
+    color: theme.milyColors.brownDark,
     marginBottom: 8,
   },
   modalSub: {
     fontSize: 13,
-    color: theme.colors.textSecondary,
+    color: theme.milyColors.brownMid,
     lineHeight: 20,
     marginBottom: 20,
   },
   modalInput: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    height: 52,
+    borderWidth: 1.5,
+    borderColor: theme.milyColors.surface2,
     borderRadius: theme.borderRadius.input,
-    paddingHorizontal: theme.spacing[4],
+    paddingHorizontal: 16,
     fontSize: 16,
-    color: theme.colors.textPrimary,
+    color: theme.milyColors.brownDark,
     backgroundColor: theme.colors.surface,
-    marginBottom: theme.spacing[4],
+    marginBottom: 16,
   },
   sendButton: {
-    height: 48,
-    borderRadius: theme.borderRadius.button ?? 12,
-    backgroundColor: theme.colors.primary,
+    height: 52,
+    borderRadius: theme.borderRadius.button,
+    backgroundColor: theme.milyColors.coral,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing[3],
+    marginBottom: 12,
   },
-  sendButtonDisabled: {
-    opacity: 0.6,
-  },
+  sendButtonDisabled: { opacity: 0.6 },
   sendButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  cancelButton: {
-    alignSelf: 'center',
-  },
+  cancelButton: { alignSelf: 'center' },
   cancelButtonText: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
+    color: theme.milyColors.brownMid,
   },
 });

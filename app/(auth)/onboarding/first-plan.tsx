@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import {
+  View, Text, TextInput, ScrollView, StyleSheet, TouchableOpacity,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ScreenLayout } from '../../../src/ui/layouts/ScreenLayout';
-import { Button } from '../../../src/ui/components/Button';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CategorySlider } from '../../../src/ui/components/CategorySlider';
 import { theme } from '../../../src/ui/theme';
 import { DEFAULT_CATEGORIES } from '../../../src/engines/plan/defaultCategories';
@@ -14,8 +15,14 @@ import {
   savePlan,
 } from '../../../src/engines/plan/planService';
 import { useAuthStore } from '../../../src/engines/auth/authStore';
-import { completeOnboarding } from '../../../src/engines/auth/authService';
 import { CategoryAllocation } from '../../../src/engines/plan/planStore';
+
+const QUICK_BUDGETS = [
+  { label: '30만', value: 300000 },
+  { label: '50만', value: 500000 },
+  { label: '100만', value: 1000000 },
+  { label: '200만', value: 2000000 },
+];
 
 export default function FirstPlanScreen() {
   const { t } = useTranslation();
@@ -37,39 +44,85 @@ export default function FirstPlanScreen() {
     );
   };
 
+  const handleQuickBudget = (value: number) => {
+    setBudget(String(value));
+  };
+
   const handleDone = async () => {
     const budgetNum = parseInt(budget, 10);
     if (!budgetNum || !user) return;
-
     const normalized = normalizeCategoryPercents(categories);
     const plan = createNewPlan(user.uid, budgetNum);
     plan.categories = normalized;
     await savePlan(plan);
-    await completeOnboarding(user.uid);
-    router.replace('/');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    router.push('/(auth)/onboarding/ready' as any);
   };
 
   const handleSkip = async () => {
-    if (user) await completeOnboarding(user.uid);
-    router.replace('/');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    router.push('/(auth)/onboarding/ready' as any);
   };
 
+  const budgetNum = parseInt(budget, 10);
+  const isValid = !isNaN(budgetNum) && budgetNum > 0;
+
   return (
-    <ScreenLayout>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.title}>{t('onboarding_plan_title')}</Text>
 
-        <Text style={styles.label}>{t('onboarding_plan_budget_label')}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={t('onboarding_plan_budget_placeholder')}
-          placeholderTextColor={theme.colors.textSecondary}
-          value={budget}
-          onChangeText={setBudget}
-          keyboardType="numeric"
-        />
+        {/* 큰 숫자 예산 입력 */}
+        <View style={styles.budgetArea}>
+          <Text style={styles.budgetLabel}>{t('onboarding_plan_budget_label')}</Text>
+          <View style={styles.budgetInputRow}>
+            <TextInput
+              style={styles.budgetInput}
+              placeholder="0"
+              placeholderTextColor={theme.milyColors.brownLight}
+              value={budget ? Number(budget).toLocaleString() : ''}
+              onChangeText={(text) => {
+                const raw = text.replace(/,/g, '');
+                if (/^\d*$/.test(raw)) setBudget(raw);
+              }}
+              keyboardType="numeric"
+              autoFocus
+            />
+            <Text style={styles.budgetWon}>원</Text>
+          </View>
 
-        <Text style={styles.label}>{t('plan_weekly_category')}</Text>
+          {/* 빠른 선택 칩 */}
+          <View style={styles.quickChips}>
+            {QUICK_BUDGETS.map((q) => (
+              <TouchableOpacity
+                key={q.value}
+                style={[
+                  styles.quickChip,
+                  budget === String(q.value) && styles.quickChipSelected,
+                ]}
+                onPress={() => handleQuickBudget(q.value)}
+                activeOpacity={0.75}
+              >
+                <Text
+                  style={[
+                    styles.quickChipText,
+                    budget === String(q.value) && styles.quickChipTextSelected,
+                  ]}
+                >
+                  {q.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* 카테고리 슬라이더 */}
+        <Text style={styles.sectionLabel}>{t('plan_weekly_category')}</Text>
         {categories.map((cat) => {
           const info = DEFAULT_CATEGORIES.find((d) => d.id === cat.categoryId);
           if (!info) return null;
@@ -84,68 +137,148 @@ export default function FirstPlanScreen() {
           );
         })}
 
-        <Text style={styles.total}>
-          {t('plan_total_percent')}: {totalPercent}%
+        <Text style={styles.totalPercent}>
+          합계: {totalPercent}%
         </Text>
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button
-          title={t('onboarding_plan_done')}
+        <TouchableOpacity
+          style={[styles.doneButton, !isValid && styles.doneButtonDisabled]}
           onPress={handleDone}
-          disabled={!budget || parseInt(budget, 10) <= 0}
-        />
-        <Button
-          title={t('onboarding_plan_skip')}
-          onPress={handleSkip}
-          variant="outline"
+          disabled={!isValid}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.doneButtonText}>{t('onboarding_plan_done')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.skipButton}
-        />
+          onPress={handleSkip}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.skipButtonText}>{t('onboarding_plan_skip')}</Text>
+        </TouchableOpacity>
       </View>
-    </ScreenLayout>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: {
+  safe: {
     flex: 1,
-    paddingTop: theme.spacing[6],
+    backgroundColor: theme.milyColors.cream,
+  },
+  scroll: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing[6],
+    color: theme.milyColors.brownDark,
+    marginBottom: 28,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing[2],
-    marginTop: theme.spacing[4],
-  },
-  input: {
-    height: 48,
+  budgetArea: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 28,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.input,
-    paddingHorizontal: theme.spacing[4],
-    fontSize: 16,
-    color: theme.colors.textPrimary,
-    backgroundColor: theme.colors.surface,
   },
-  total: {
-    fontSize: 16,
+  budgetLabel: {
+    fontSize: 13,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: theme.milyColors.brownMid,
+    marginBottom: 10,
+    letterSpacing: 0.3,
+  },
+  budgetInputRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  budgetInput: {
+    fontSize: 38,
+    fontWeight: '700',
+    color: theme.milyColors.brownDark,
+    flex: 1,
+    padding: 0,
+  },
+  budgetWon: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: theme.milyColors.brownMid,
+    marginLeft: 6,
+  },
+  quickChips: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  quickChip: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+  },
+  quickChipSelected: {
+    borderColor: theme.milyColors.coral,
+    backgroundColor: '#FFF0ED',
+  },
+  quickChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.milyColors.brownMid,
+  },
+  quickChipTextSelected: {
+    color: theme.milyColors.coral,
+    fontWeight: '700',
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.milyColors.brownMid,
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  totalPercent: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.milyColors.coral,
     textAlign: 'right',
-    marginTop: theme.spacing[3],
-    marginBottom: theme.spacing[4],
+    marginTop: 8,
+    marginBottom: 8,
   },
   footer: {
-    paddingVertical: theme.spacing[4],
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    gap: 10,
+    backgroundColor: theme.milyColors.cream,
+  },
+  doneButton: {
+    height: 52,
+    borderRadius: theme.borderRadius.button,
+    backgroundColor: theme.milyColors.coral,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  doneButtonDisabled: { opacity: 0.4 },
+  doneButtonText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
   },
   skipButton: {
-    marginTop: theme.spacing[2],
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skipButtonText: {
+    fontSize: 15,
+    color: theme.milyColors.brownMid,
   },
 });

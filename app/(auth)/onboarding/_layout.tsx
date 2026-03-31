@@ -6,6 +6,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="role-select" />
       <Stack.Screen name="first-plan" />
       <Stack.Screen name="child-join" />
+      <Stack.Screen name="ready" />
     </Stack>
   );
 }

@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
-import { Card } from '../../src/ui/components/Card';
-import { Button } from '../../src/ui/components/Button';
-import { ProgressBar } from '../../src/ui/components/ProgressBar';
 import { EmptyState } from '../../src/ui/components/EmptyState';
 import { AchievementUnlockPopup } from '../../src/ui/components/AchievementUnlockPopup';
 import { GiftIcon } from '../../src/ui/components/CouponInbox';
+import { DarkCard } from '../../src/components/ui/DarkCard';
+import { GoldCard } from '../../src/components/ui/GoldCard';
+import { FABZone } from '../../src/components/ui/FABZone';
 import { theme } from '../../src/ui/theme';
 import { useRewardStore } from '../../src/engines/reward/rewardStore';
 import { hasActiveCoupons, getCoupons, checkAndExpireCoupons } from '../../src/engines/reward/rewardService';
@@ -31,6 +31,7 @@ import {
 } from '../../src/engines/achievement/achievementService';
 import { AchievementContext } from '../../src/engines/achievement/achievementTypes';
 import { getWeekId } from '../../src/utils/dateUtils';
+import { DEFAULT_CATEGORIES } from '../../src/engines/plan/defaultCategories';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -43,7 +44,6 @@ export default function HomeScreen() {
     userAchievements,
     nearestCardShownWeek,
     setNearestCardShownWeek,
-    statsMap,
   } = useAchievementStore();
 
   const setCoupons = useRewardStore((s) => s.setCoupons);
@@ -56,12 +56,10 @@ export default function HomeScreen() {
     if (!user) return;
     loadLatestPlan(user.uid);
     loadWeeklyCheckIns(user.uid);
-    // 만료 쿠폰 처리 + 쿠폰 목록 로드
     checkAndExpireCoupons(user.uid).catch(() => {});
     getCoupons(user.uid).then(setCoupons).catch(() => {});
   }, [user?.uid]);
 
-  // 최소 컨텍스트 — 홈에서 이용 가능한 데이터만
   const achievementCtx = useMemo<AchievementContext>(() => ({
     uid: user?.uid ?? '',
     totalCheckIns: checkIns.length,
@@ -98,115 +96,136 @@ export default function HomeScreen() {
     totalMilyXp: 0,
   }), [user, plan, checkIns, userAchievements]);
 
-  // "거의 다 왔어요" — 이번 주에 아직 표시 안 했을 때만
   const currentWeekId = getWeekId();
   const showNearestCard = nearestCardShownWeek !== currentWeekId;
-  const nearestAchievement = showNearestCard
-    ? getNearestAchievement(achievementCtx)
-    : null;
+  const nearestAchievement = showNearestCard ? getNearestAchievement(achievementCtx) : null;
 
-  const handleNearestCardSeen = () => {
-    setNearestCardShownWeek(currentWeekId);
-  };
+  const handleNearestCardSeen = () => setNearestCardShownWeek(currentWeekId);
 
-  // 팝업 공유 버튼
   const handleShare = async () => {
     if (!pendingUnlock || !user) return;
     await markAchievementShared(user.uid, pendingUnlock.id, true);
     useAchievementStore.getState().setPendingUnlock(null);
   };
 
+  const breakdown = getWeeklySpendBreakdown(checkIns);
+  const weeklyBudget = plan ? getWeeklyBudget(plan) : 0;
+  const totalSpent = getWeeklyTotal(checkIns);
+  const breakdownTotal = breakdown.fixed + breakdown.living + breakdown.choice;
+
+  // 최근 3개 기록
+  const recentThree = [...checkIns]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 3);
+
+  const ctaType = getHomeCtaType();
+
+  const fabMain = {
+    key: 'record',
+    label: '오늘 기록하기',
+    onPress: () => router.push('/(adult)/checkin'),
+  };
+  const fabSecondary = [
+    { key: 'review', label: '주간 회고', emoji: '📊', onPress: () => router.push('/(adult)/review') },
+    { key: 'dream', label: '꿈 설계소', emoji: '🌟', onPress: () => router.push('/(adult)/dream') },
+  ];
+
   if (!plan) {
     return (
       <ScreenLayout>
-        <EmptyState message={t('empty_home_no_plan')} />
-        <View style={styles.ctaContainer}>
-          <Button
-            title={t('home_cta_record')}
-            onPress={() => router.push('/(adult)/checkin')}
-          />
+        <View style={styles.container}>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>{t('home_title')}</Text>
+            {user && <GiftIcon uid={user.uid} activeCount={activeCouponCount} />}
+          </View>
+          <EmptyState message={t('empty_home_no_plan')} />
         </View>
+        <FABZone mainAction={fabMain} />
+        {pendingUnlock && (
+          <AchievementUnlockPopup
+            achievement={pendingUnlock}
+            unlockRate={getUnlockRateLabel(pendingUnlock.id, 0)}
+            onShare={handleShare}
+          />
+        )}
       </ScreenLayout>
     );
   }
 
-  const weeklyBudget = getWeeklyBudget(plan);
-  const weeklySpent = getWeeklyTotal(checkIns);
-  const breakdown = getWeeklySpendBreakdown(checkIns);
-  // 홈 메인 표시: 선택소비(choice) 금액 — CLAUDE.md: 고정비 제외 선택소비 우선
-  const choiceSpent = breakdown.choice;
-  const choiceProgress = weeklyBudget > 0 ? choiceSpent / weeklyBudget : 0;
-  const ctaType = getHomeCtaType();
-
   return (
     <ScreenLayout>
-      <View style={styles.container}>
-        {/* 헤더: 타이틀 + 선물함 아이콘 (활성 쿠폰 있을 때만 표시) */}
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* 헤더 */}
         <View style={styles.headerRow}>
           <Text style={styles.title}>{t('home_title')}</Text>
-          {user && (
-            <GiftIcon uid={user.uid} activeCount={activeCouponCount} />
-          )}
+          {user && <GiftIcon uid={user.uid} activeCount={activeCouponCount} />}
         </View>
 
-        <Card style={styles.summaryCard}>
-          {/* 선택소비 메인 — CLAUDE.md: 고정비 제외 선택소비 우선 */}
-          <View style={styles.budgetRow}>
-            <Text style={styles.budgetLabel}>✨ 이번 주 선택소비</Text>
-            <Text style={styles.budgetValue}>
-              {formatCurrency(weeklyBudget)} 예산
+        {/* DarkCard — 이번 주 선택소비 큰 숫자 */}
+        <DarkCard style={styles.darkCard}>
+          <Text style={styles.darkCardLabel}>✨ 이번 주 선택소비</Text>
+          <Text style={styles.darkCardAmount}>
+            {formatCurrency(breakdown.choice)}
+          </Text>
+
+          {/* 3분할 바 */}
+          {breakdownTotal > 0 && (
+            <View style={styles.breakdownBarContainer}>
+              <View style={styles.breakdownBar}>
+                <View
+                  style={[
+                    styles.barSegment,
+                    styles.barFixed,
+                    { flex: breakdown.fixed / breakdownTotal },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.barSegment,
+                    styles.barLiving,
+                    { flex: breakdown.living / breakdownTotal },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.barSegment,
+                    styles.barChoice,
+                    { flex: breakdown.choice / breakdownTotal },
+                  ]}
+                />
+              </View>
+              <View style={styles.breakdownLabels}>
+                <Text style={styles.breakdownItem}>
+                  🔒 {formatCurrency(breakdown.fixed)}
+                </Text>
+                <Text style={styles.breakdownItem}>
+                  🛒 {formatCurrency(breakdown.living)}
+                </Text>
+                <Text style={[styles.breakdownItem, styles.breakdownChoiceItem]}>
+                  ✨ {formatCurrency(breakdown.choice)}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {weeklyBudget > 0 && (
+            <Text style={styles.darkCardBudget}>
+              주간 예산 {formatCurrency(weeklyBudget)}
             </Text>
-          </View>
+          )}
+        </DarkCard>
 
-          <View style={styles.progressSection}>
-            <View style={styles.progressLabels}>
-              <Text style={styles.spentLabel}>
-                {formatCurrency(choiceSpent)}
-              </Text>
-              <Text style={styles.limitLabel}>
-                / {formatCurrency(weeklyBudget)}
-              </Text>
-            </View>
-            <ProgressBar
-              progress={choiceProgress}
-              color={
-                choiceProgress > 1 ? theme.colors.warning : theme.colors.primary
-              }
-            />
-          </View>
+        {/* GoldCard — AI 인사이트 */}
+        <GoldCard style={styles.goldCard}>
+          <Text style={styles.goldCardEmoji}>💬</Text>
+          <Text style={styles.goldCardText}>{t('home_ai_comment_default')}</Text>
+        </GoldCard>
 
-          {/* SpendType 분리 표시 */}
-          <View style={styles.breakdownRow}>
-            <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>🔒 고정</Text>
-              <Text style={styles.breakdownValue}>
-                {formatCurrency(breakdown.fixed)}
-              </Text>
-            </View>
-            <View style={styles.breakdownDivider} />
-            <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>🛒 생활</Text>
-              <Text style={styles.breakdownValue}>
-                {formatCurrency(breakdown.living)}
-              </Text>
-            </View>
-            <View style={styles.breakdownDivider} />
-            <View style={styles.breakdownItem}>
-              <Text style={[styles.breakdownLabel, styles.breakdownChoiceLabel]}>
-                ✨ 선택
-              </Text>
-              <Text style={[styles.breakdownValue, styles.breakdownChoiceValue]}>
-                {formatCurrency(breakdown.choice)}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        <Card style={styles.commentCard}>
-          <Text style={styles.aiComment}>{t('home_ai_comment_default')}</Text>
-        </Card>
-
-        {/* 거의 다 왔어요 카드 — 주 1회 */}
+        {/* 거의 다 왔어요 카드 */}
         {nearestAchievement && (
           <TouchableOpacity
             style={styles.nearestCard}
@@ -221,25 +240,33 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {checkIns.length === 0 && (
+        {/* 최근 기록 3개 */}
+        {recentThree.length > 0 ? (
+          <View style={styles.recentSection}>
+            <Text style={styles.recentTitle}>최근 기록</Text>
+            {recentThree.map((ci) => {
+              const cat = DEFAULT_CATEGORIES.find((c) => c.id === ci.categoryId);
+              return (
+                <View key={ci.checkInId} style={styles.recentRow}>
+                  <Text style={styles.recentEmoji}>{cat?.emoji ?? '📝'}</Text>
+                  <Text style={styles.recentCat}>{cat?.label ?? ci.categoryId}</Text>
+                  <Text style={styles.recentAmount}>
+                    {formatCurrency(ci.amount)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : (
           <EmptyState message={t('empty_home_no_checkin')} />
         )}
-      </View>
 
-      <View style={styles.ctaContainer}>
-        <Button
-          title={
-            ctaType === 'record' ? t('home_cta_record') : t('home_cta_review')
-          }
-          onPress={() =>
-            router.push(
-              ctaType === 'record' ? '/(adult)/checkin' : '/(adult)/review'
-            )
-          }
-        />
-      </View>
+        {/* FAB 여백 */}
+        <View style={{ height: 80 }} />
+      </ScrollView>
 
-      {/* 해금 팝업 — pendingUnlock 있을 때 */}
+      <FABZone mainAction={fabMain} secondaryActions={fabSecondary} />
+
       {pendingUnlock && (
         <AchievementUnlockPopup
           achievement={pendingUnlock}
@@ -252,71 +279,98 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: theme.spacing[6],
-  },
+  scroll: { flex: 1 },
+  scrollContent: { paddingTop: 24 },
+  container: { flex: 1, paddingTop: 24 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing[5],
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    color: theme.colors.textPrimary,
+    color: theme.milyColors.brownDark,
   },
-  summaryCard: {
-    marginBottom: theme.spacing[4],
+  darkCard: {
+    marginBottom: 14,
   },
-  budgetRow: {
+  darkCardLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  darkCardAmount: {
+    fontSize: 38,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  breakdownBarContainer: {
+    marginBottom: 12,
+  },
+  breakdownBar: {
+    flexDirection: 'row',
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    marginBottom: 10,
+  },
+  barSegment: {
+    height: '100%',
+  },
+  barFixed: {
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+  barLiving: {
+    backgroundColor: 'rgba(201,169,110,0.8)',
+  },
+  barChoice: {
+    backgroundColor: theme.milyColors.coral,
+  },
+  breakdownLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: theme.spacing[4],
   },
-  budgetLabel: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
+  breakdownItem: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.75)',
+    fontWeight: '500',
   },
-  budgetValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.textPrimary,
-  },
-  progressSection: {
-    gap: theme.spacing[2],
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  spentLabel: {
-    fontSize: 20,
+  breakdownChoiceItem: {
+    color: '#FFBDAD',
     fontWeight: '700',
-    color: theme.colors.textPrimary,
   },
-  limitLabel: {
+  darkCardBudget: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 8,
+  },
+  goldCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 14,
+  },
+  goldCardEmoji: {
+    fontSize: 18,
+    marginRight: 10,
+    marginTop: 1,
+  },
+  goldCardText: {
+    flex: 1,
     fontSize: 14,
-    color: theme.colors.textSecondary,
-    marginLeft: theme.spacing[1],
-  },
-  commentCard: {
-    marginBottom: theme.spacing[4],
-  },
-  aiComment: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    lineHeight: 20,
-  },
-  ctaContainer: {
-    paddingVertical: theme.spacing[4],
+    color: theme.milyColors.brownDark,
+    lineHeight: 21,
+    fontWeight: '500',
   },
   nearestCard: {
     backgroundColor: '#FFF8EC',
     borderRadius: theme.borderRadius.card,
-    padding: theme.spacing[4],
-    marginBottom: theme.spacing[4],
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
     borderColor: '#F4C542',
   },
@@ -324,51 +378,49 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#C8960A',
-    marginBottom: theme.spacing[1],
+    marginBottom: 4,
   },
   nearestTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing[1],
+    color: theme.milyColors.brownDark,
+    marginBottom: 4,
   },
   nearestHint: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
+    color: theme.milyColors.brownMid,
   },
-  breakdownRow: {
+  recentSection: {
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  recentTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.milyColors.brownMid,
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  recentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing[4],
-    paddingTop: theme.spacing[3],
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.milyColors.surface2,
   },
-  breakdownItem: {
+  recentEmoji: {
+    fontSize: 18,
+    marginRight: 12,
+  },
+  recentCat: {
     flex: 1,
-    alignItems: 'center',
-    gap: 3,
-  },
-  breakdownDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: theme.colors.border,
-  },
-  breakdownLabel: {
-    fontSize: 11,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    color: theme.milyColors.brownDark,
     fontWeight: '500',
   },
-  breakdownChoiceLabel: {
-    color: theme.colors.primary,
-    fontWeight: '700',
-  },
-  breakdownValue: {
-    fontSize: 13,
+  recentAmount: {
+    fontSize: 15,
     fontWeight: '600',
-    color: theme.colors.textPrimary,
-  },
-  breakdownChoiceValue: {
-    color: theme.colors.primary,
+    color: theme.milyColors.brownDark,
   },
 });
