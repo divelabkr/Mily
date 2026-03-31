@@ -89,7 +89,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (loading) return;
 
     const inAuth = segments[0] === '(auth)';
-    console.log('[AuthGate] user:', user?.uid ?? 'null', '| inAuth:', inAuth, '| segments:', segments[0]);
+    // onboarding 하위 경로(role-select → first-plan → child-join) 진행 중인지 확인
+    // setRole() 호출 시 user 객체가 교체되어 이 effect가 재실행되는데,
+    // 이미 onboarding 흐름 안에 있으면 role-select로 되돌리면 안 됨
+    const inOnboarding = inAuth && segments[1] === 'onboarding';
+    console.log('[AuthGate] user:', user?.uid ?? 'null', '| inAuth:', inAuth, '| inOnboarding:', inOnboarding, '| path:', segments.join('/'));
 
     if (!user && !inAuth) {
       console.log('[AuthGate] → /(auth)/login (비로그인)');
@@ -99,16 +103,21 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       if (user.isMaster) {
         console.log('[AuthGate] → /(adult)/home (마스터)');
         router.replace('/(adult)/home');
-      } else if (!user.onboardingComplete) {
-        console.log('[AuthGate] → 온보딩 (onboardingComplete=false)');
+      } else if (!user.onboardingComplete && !inOnboarding) {
+        // 온보딩 미완료이고 아직 onboarding 흐름 진입 전일 때만 진입점으로 보냄
+        // inOnboarding=true이면 이미 흐름 중이므로 현재 화면 유지
+        console.log('[AuthGate] → 온보딩 진입 (onboardingComplete=false)');
         router.replace('/(auth)/onboarding/role-select');
-      } else if (user.role === 'child') {
-        console.log('[AuthGate] → /(child)/home');
-        router.replace('/(child)/home');
-      } else {
-        console.log('[AuthGate] → /(adult)/home (role:', user.role, ')');
-        router.replace('/(adult)/home');
+      } else if (user.onboardingComplete) {
+        if (user.role === 'child') {
+          console.log('[AuthGate] → /(child)/home');
+          router.replace('/(child)/home');
+        } else {
+          console.log('[AuthGate] → /(adult)/home (role:', user.role, ')');
+          router.replace('/(adult)/home');
+        }
       }
+      // inOnboarding=true && onboardingComplete=false: 흐름 진행 중 → 아무것도 안 함
     }
   }, [user, loading, segments]);
 
