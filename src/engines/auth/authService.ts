@@ -112,8 +112,18 @@ export function initAuthListener(): () => void {
         const isMaster = tokenResult.claims['role'] === 'master';
         console.log('[AuthListener] isMaster:', isMaster);
 
+        // Race condition 방어: onAuthStateChanged 발화 시점과
+        // Firestore SDK 내부 토큰 주입 시점이 다를 수 있어
+        // permission-denied 발생 시 300ms 후 1회 재시도
         console.log('[AuthListener] getUserDoc 조회 시작 — users/' + firebaseUser.uid);
-        const userDoc = await getUserDoc(firebaseUser.uid);
+        let userDoc = await getUserDoc(firebaseUser.uid).catch(async (e: { code?: string }) => {
+          if (e?.code === 'permission-denied') {
+            console.warn('[AuthListener] permission-denied — 300ms 후 재시도');
+            await new Promise((r) => setTimeout(r, 300));
+            return getUserDoc(firebaseUser.uid);
+          }
+          throw e;
+        });
         console.log('[AuthListener] getUserDoc 결과:', userDoc ? `role=${userDoc.role}, onboarding=${userDoc.onboardingComplete}` : 'null (문서 없음)');
 
         if (userDoc) {
@@ -157,7 +167,13 @@ export function initAuthListener(): () => void {
       } catch (err: unknown) {
         const e = err as { code?: string; message?: string };
         console.error('[AuthListener] 오류 — code:', e?.code, 'message:', e?.message);
-        setUser(null);
+        // auth 오류(토큰 무효 등)만 로그아웃. Firestore 일시 오류는 로그아웃 안 함.
+        const isAuthError = e?.code?.startsWith('auth/');
+        if (isAuthError) {
+          setUser(null);
+        }
+        // 그 외(permission-denied 재시도 실패, 네트워크 등)는 loading만 해제
+        // → 앱은 로그인 화면으로 가지 않고 재시도 가능 상태 유지
       } finally {
         setLoading(false);
       }
