@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## [1.14.1] - 2026.03.31
+
+### 🐛 버그 수정
+- AuthGate에서 온보딩 플로우 중 role-select로 잘못 리다이렉트되는 문제 해결
+- onAuthStateChanged와 Firestore 토큰 주입 간의 race condition 해결
+- Firestore rules 배포 문제 해결 및 AuthGate 디버그 로그 추가
+- getFirestore 'default-ver1' 명시 및 firebase.json rules DB 타겟 수정
+- Auth signUp/signIn 인라인 에러 표시 및 디버그 로그 개선
+
+---
+
 ## [1.14.0] - 2026.03.31
 
 ### 🐛 버그 수정
