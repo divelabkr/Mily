@@ -1,0 +1,216 @@
+# Firestore Rules 수동 배포 방법
+
+CLI 배포가 실패할 경우 Firebase 콘솔에서 직접 적용합니다.
+
+## 순서
+
+1. [console.firebase.google.com](https://console.firebase.google.com) 접속
+2. **mily-lab-dev** 프로젝트 선택
+3. 왼쪽 메뉴 → **Firestore Database** 클릭
+4. 상단 탭 → **규칙** 탭 클릭
+5. 아래 규칙 전체 복사 후 에디터에 붙여넣기
+6. **게시** 버튼 클릭
+
+---
+
+## 현재 Rules (firestore.rules)
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ──────────────────────────────────────────────
+    // users/{uid} — 본인만 RW
+    // ──────────────────────────────────────────────
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // 쿠폰: 본인만 R, W는 Admin SDK(Functions)만 (클라이언트 직접 쓰기 금지)
+      match /coupons/{couponId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow write: if false;
+      }
+
+      // 보상 설정: 본인만 RW
+      match /settings/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ──────────────────────────────────────────────
+    // plans/{uid} — 본인만 RW
+    // ──────────────────────────────────────────────
+    match /plans/{uid}/{month} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /plans/{uid}/{month}/{doc} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ──────────────────────────────────────────────
+    // checkins / reviews — 본인만 RW
+    // ──────────────────────────────────────────────
+    match /checkins/{uid}/{weekId}/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /reviews/{uid}/{weekId}/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ──────────────────────────────────────────────
+    // subscriptions/{uid} — 본인만 R, W는 Admin SDK만
+    // ──────────────────────────────────────────────
+    match /subscriptions/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // families/{familyId} — 가족 구성원만 R, 부모(ownerUid)만 W
+    // ──────────────────────────────────────────────
+    match /families/{familyId} {
+      allow read: if request.auth != null &&
+        request.auth.uid in resource.data.memberUids;
+      // create: 본인이 ownerUid인 경우만 (신규 가족 생성)
+      allow create: if request.auth != null &&
+        request.resource.data.ownerUid == request.auth.uid;
+      // update/delete: 기존 ownerUid만
+      allow update, delete: if request.auth != null &&
+        request.auth.uid == resource.data.ownerUid;
+    }
+
+    // privacySettings — 가족 구성원 R, 해당 자녀만 W (역전된 프라이버시)
+    match /families/{familyId}/privacySettings/{childUid} {
+      allow read: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.memberUids;
+      allow write: if request.auth != null && request.auth.uid == childUid;
+    }
+
+    // ──────────────────────────────────────────────
+    // request_cards/{familyId}/{cardId}
+    //   자녀: create만 (fromUid = 본인)
+    //   부모: read + update(응답)만 (toUid = 본인)
+    //   둘 다: 자기 것만 read
+    // ──────────────────────────────────────────────
+    match /request_cards/{familyId}/{cardId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.fromUid ||
+        request.auth.uid == resource.data.toUid
+      );
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.fromUid;
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.toUid;
+      allow delete: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // praise_cards/{familyId}/{cardId}
+    //   부모: create + read (fromUid = 본인)
+    //   자녀: read만 (toUid = 본인)
+    // ──────────────────────────────────────────────
+    match /praise_cards/{familyId}/{cardId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.fromUid ||
+        request.auth.uid == resource.data.toUid
+      );
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.fromUid;
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.toUid;
+      allow delete: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // achievements/{uid}/{achievementId} — 본인만 RW
+    // ──────────────────────────────────────────────
+    match /achievements/{uid}/{achievementId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ──────────────────────────────────────────────
+    // achievement_stats/{achievementId}
+    //   모든 인증 유저: R만
+    //   W: Admin SDK(Functions 배치)만 — 클라이언트 직접 쓰기 금지
+    // ──────────────────────────────────────────────
+    match /achievement_stats/{achievementId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // economic_badges/{uid}/{badgeId} — 본인만 RW
+    // ──────────────────────────────────────────────
+    match /economic_badges/{uid}/{badgeId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ──────────────────────────────────────────────
+    // unlock_status/{uid} — 본인만 RW
+    // ──────────────────────────────────────────────
+    match /unlock_status/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ──────────────────────────────────────────────
+    // consents/{consentId}
+    //   guardianUid / childUid만 R
+    //   guardianUid만 create (부모가 동의)
+    // ──────────────────────────────────────────────
+    match /consents/{consentId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.guardianUid ||
+        request.auth.uid == resource.data.childUid
+      );
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.guardianUid;
+      allow update, delete: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // consent_requests/{requestId}
+    //   자녀: create (childUid = 본인)
+    //   부모/자녀: read
+    //   부모: update (parentUid = 본인)
+    //   delete: 금지
+    // ──────────────────────────────────────────────
+    match /consent_requests/{requestId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.childUid ||
+        request.auth.uid == resource.data.parentUid
+      );
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.childUid;
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.parentUid;
+      allow delete: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // pilots/{pilotId} — B2B 파일럿: 클라이언트 읽기 금지
+    // ──────────────────────────────────────────────
+    match /pilots/{pilotId} {
+      allow read, write: if false;
+    }
+
+    // ──────────────────────────────────────────────
+    // ambassador_invitations/{familyId}
+    //   가족 구성원만 R, W는 Admin SDK(배치 스케줄러)만
+    // ──────────────────────────────────────────────
+    match /ambassador_invitations/{familyId} {
+      allow read: if request.auth != null &&
+        request.auth.uid in get(/databases/$(database)/documents/families/$(familyId)).data.memberUids;
+      allow write: if false;
+    }
+  }
+}
+```
+
+---
+
+## 주의사항
+
+- 위 규칙은 `default-ver1` 데이터베이스에 적용됩니다
+- Firebase 콘솔에서 Firestore → 데이터베이스 선택 시 **default-ver1** 선택 후 규칙 탭으로 이동하세요
+- `(default)` 데이터베이스가 아닌 `default-ver1`인지 URL에서 확인하세요

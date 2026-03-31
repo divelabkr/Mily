@@ -89,18 +89,24 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (loading) return;
 
     const inAuth = segments[0] === '(auth)';
+    console.log('[AuthGate] user:', user?.uid ?? 'null', '| inAuth:', inAuth, '| segments:', segments[0]);
 
     if (!user && !inAuth) {
+      console.log('[AuthGate] → /(auth)/login (비로그인)');
       router.replace('/(auth)/login');
     } else if (user && inAuth) {
       // 마스터 계정: 온보딩 건너뛰고 바로 홈
       if (user.isMaster) {
+        console.log('[AuthGate] → /(adult)/home (마스터)');
         router.replace('/(adult)/home');
       } else if (!user.onboardingComplete) {
+        console.log('[AuthGate] → 온보딩 (onboardingComplete=false)');
         router.replace('/(auth)/onboarding/role-select');
       } else if (user.role === 'child') {
+        console.log('[AuthGate] → /(child)/home');
         router.replace('/(child)/home');
       } else {
+        console.log('[AuthGate] → /(adult)/home (role:', user.role, ')');
         router.replace('/(adult)/home');
       }
     }

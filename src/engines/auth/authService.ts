@@ -97,18 +97,25 @@ export function initAuthListener(): () => void {
       const { setUser, setLoading } = useAuthStore.getState();
 
       if (!firebaseUser) {
+        console.log('[AuthListener] 로그아웃 상태 — user null');
         setUser(null);
         setLoading(false);
         return;
       }
+
+      console.log('[AuthListener] onAuthStateChanged uid:', firebaseUser.uid);
 
       try {
         // Custom Claims 읽기 (forceRefresh=false — 캐시 사용)
         // 마스터 부여 후 즉시 반영하려면 forceRefresh=true로 재로그인 필요
         const tokenResult = await firebaseUser.getIdTokenResult();
         const isMaster = tokenResult.claims['role'] === 'master';
+        console.log('[AuthListener] isMaster:', isMaster);
 
+        console.log('[AuthListener] getUserDoc 조회 시작 — users/' + firebaseUser.uid);
         const userDoc = await getUserDoc(firebaseUser.uid);
+        console.log('[AuthListener] getUserDoc 결과:', userDoc ? `role=${userDoc.role}, onboarding=${userDoc.onboardingComplete}` : 'null (문서 없음)');
+
         if (userDoc) {
           setUser({
             uid: userDoc.uid,
@@ -131,6 +138,7 @@ export function initAuthListener(): () => void {
             .then((token) => { if (token) saveToken(userDoc.uid, token); })
             .catch(() => {});
         } else {
+          console.log('[AuthListener] 신규 유저 — createUserDoc 호출');
           const created = await createUserDoc(
             firebaseUser.uid,
             firebaseUser.email ?? '',
@@ -146,7 +154,9 @@ export function initAuthListener(): () => void {
             isMaster,
           });
         }
-      } catch {
+      } catch (err: unknown) {
+        const e = err as { code?: string; message?: string };
+        console.error('[AuthListener] 오류 — code:', e?.code, 'message:', e?.message);
         setUser(null);
       } finally {
         setLoading(false);

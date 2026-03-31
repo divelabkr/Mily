@@ -5,9 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bufferRequestCard = void 0;
 const https_1 = require("firebase-functions/v2/https");
-const params_1 = require("firebase-functions/params");
 const sdk_1 = __importDefault(require("@anthropic-ai/sdk"));
-const anthropicApiKey = (0, params_1.defineSecret)('ANTHROPIC_API_KEY');
+const secrets_1 = require("../config/secrets");
+const anthropicApiKey = secrets_1.ANTHROPIC_SECRET;
 const AI_MODEL = 'claude-haiku-4-5-20251001';
 const AI_TIMEOUT_MS = 10000;
 const SYSTEM_PROMPT = `너는 Mily 앱의 가족 대화 완충기다.

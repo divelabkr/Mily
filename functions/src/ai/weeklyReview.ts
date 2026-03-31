@@ -1,6 +1,6 @@
 import { onCall } from 'firebase-functions/v2/https';
 import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_SECRET, getSecretValue } from '../config/secrets';
+import { ANTHROPIC_SECRET } from '../config/secrets';
 
 const anthropicApiKey = ANTHROPIC_SECRET;
 
