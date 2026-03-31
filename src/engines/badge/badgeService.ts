@@ -127,9 +127,10 @@ const BADGE_CONDITIONS: Record<BadgeId, (ctx: BadgeContext) => boolean> = {
 // Firestore CRUD
 // ──────────────────────────────────────────────
 
-// economic_badges/{uid}/{badgeId}
+// economic_badges/{uid}/badges/{badgeId}
+// 경로 구조: collection(2) → doc(uid) → collection('badges') → doc(badgeId) = 4세그먼트
 export async function loadUserBadges(uid: string): Promise<UserBadge[]> {
-  const colRef = collection(getFirebaseDb(), 'economic_badges', uid);
+  const colRef = collection(getFirebaseDb(), 'economic_badges', uid, 'badges');
   const snaps = await getDocs(colRef);
   const list = snaps.docs.map((d) => d.data() as UserBadge);
   useBadgeStore.getState().setUserBadges(list);
@@ -137,7 +138,7 @@ export async function loadUserBadges(uid: string): Promise<UserBadge[]> {
 }
 
 async function saveBadge(uid: string, badge: UserBadge): Promise<void> {
-  const ref = doc(getFirebaseDb(), 'economic_badges', uid, badge.badgeId);
+  const ref = doc(getFirebaseDb(), 'economic_badges', uid, 'badges', badge.badgeId);
   await setDoc(ref, badge);
 }
 

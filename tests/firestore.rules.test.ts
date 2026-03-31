@@ -50,8 +50,8 @@ describe('firestore.rules — 구조 검증', () => {
     expect(rulesContent).toMatch(/match \/achievement_stats\/\{achievementId\}/);
   });
 
-  it('economic_badges/{uid} 규칙 존재', () => {
-    expect(rulesContent).toMatch(/match \/economic_badges\/\{uid\}\/\{badgeId\}/);
+  it('economic_badges/{uid}/badges/{badgeId} 규칙 존재', () => {
+    expect(rulesContent).toMatch(/match \/economic_badges\/\{uid\}\/badges\/\{badgeId\}/);
   });
 
   it('unlock_status/{uid} 규칙 존재', () => {
