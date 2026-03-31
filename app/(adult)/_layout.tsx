@@ -74,6 +74,14 @@ export default function AdultLayout() {
         options={{ href: null }}
       />
       <Tabs.Screen
+        name="achievements"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="badges"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="simulator"
         options={{ href: null }}
       />

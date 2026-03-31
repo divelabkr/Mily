@@ -63,7 +63,7 @@
   "checkin_spend_type_choice": "선택",
   "checkin_emotion_label": "감정 태그 (선택)",
   "checkin_memo_placeholder": "메모 (선택)",
-  "checkin_save": "저장",
+  "checkin_save": "기록 완료",
   "checkin_recent_suggestion": "지난번처럼",
   "checkin_recent_label": "지난번처럼 빠르게 입력할까요?",
   "checkin_recent_apply": "{{category}} {{amount}}원 불러오기",

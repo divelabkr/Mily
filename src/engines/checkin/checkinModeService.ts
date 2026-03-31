@@ -1,13 +1,13 @@
 // ──────────────────────────────────────────────
 // checkinModeService.ts — 체크인 모드 관리
-// quick(3초) / standard(30초) / detailed(상세)
+// standard(기본) / detailed(자세히)
 // AsyncStorage 유지 + Remote Config 기본값
 // ──────────────────────────────────────────────
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getString } from '../config/remoteConfigService';
 
-export type CheckInMode = 'quick' | 'standard' | 'detailed';
+export type CheckInMode = 'standard' | 'detailed';
 
 const STORAGE_KEY = 'mily_checkin_mode';
 
@@ -16,9 +16,8 @@ export const CHECKIN_MODE_OPTIONS: {
   label: string;
   desc: string;
 }[] = [
-  { mode: 'quick',    label: '3초',  desc: '금액+카테고리만' },
-  { mode: 'standard', label: '30초', desc: '지출유형 추가' },
-  { mode: 'detailed', label: '상세', desc: '감정+메모 포함' },
+  { mode: 'standard', label: '기본',  desc: '금액·카테고리·지출유형' },
+  { mode: 'detailed', label: '자세히', desc: '감정태그·메모 추가' },
 ];
 
 // ──────────────────────────────────────────────
@@ -27,7 +26,7 @@ export const CHECKIN_MODE_OPTIONS: {
 
 export function getRemoteDefaultMode(): CheckInMode {
   const val = getString('daily_checkin_default_mode');
-  if (val === 'quick' || val === 'standard' || val === 'detailed') return val;
+  if (val === 'standard' || val === 'detailed') return val;
   return 'standard';
 }
 
@@ -38,9 +37,8 @@ export function getRemoteDefaultMode(): CheckInMode {
 export async function loadCheckInMode(): Promise<CheckInMode> {
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
-    if (stored === 'quick' || stored === 'standard' || stored === 'detailed') {
-      return stored;
-    }
+    if (stored === 'standard' || stored === 'detailed') return stored;
+    // 구버전 'quick' 값이 저장된 경우 'standard'로 마이그레이션
   } catch {
     // 스토리지 실패 → Remote Config 기본값
   }
@@ -71,8 +69,6 @@ export interface CheckInModeFields {
 
 export function getFieldsForMode(mode: CheckInMode): CheckInModeFields {
   switch (mode) {
-    case 'quick':
-      return { showSpendType: false, showEmotion: false, showMemo: false };
     case 'standard':
       return { showSpendType: true, showEmotion: false, showMemo: false };
     case 'detailed':

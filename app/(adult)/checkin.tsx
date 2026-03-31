@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -124,22 +125,29 @@ export default function CheckInScreen() {
 
     await doSave(amountNum);
     } catch {
-      // 저장 실패 — 사용자는 재시도 가능
+      // doSave 내부에서 Alert 처리 — 여기서는 무시
     }
   };
 
   const doSave = async (amountNum: number) => {
-    if (!user) return;
-    await saveCheckIn({
-      uid: user.uid,
-      weekId: getWeekId(),
-      categoryId: selectedCategory,
-      amount: amountNum,
-      spendType: selectedSpendType,
-      memo: memo || undefined,
-      emotionTag: selectedEmotion,
-    });
-    router.back();
+    if (!user) {
+      Alert.alert('오류', '로그인이 필요해요. 다시 시도해주세요.');
+      return;
+    }
+    try {
+      await saveCheckIn({
+        uid: user.uid,
+        weekId: getWeekId(),
+        categoryId: selectedCategory,
+        amount: amountNum,
+        spendType: selectedSpendType,
+        memo: memo || undefined,
+        emotionTag: selectedEmotion,
+      });
+      router.back();
+    } catch {
+      Alert.alert('저장 실패', '기록을 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+    }
   };
 
   const handleBoundaryException = () => {

@@ -265,7 +265,10 @@ export default function MyScreen() {
   };
 
   const menuItems = [
-    { label: t('my_profile'), onPress: () => {} },
+    {
+      label: t('my_profile'),
+      onPress: () => Alert.alert('준비 중', '프로필 편집은 곧 제공될 예정이에요.'),
+    },
     {
       label: t('my_subscription'),
       onPress: () => router.push('/(adult)/paywall'),
@@ -280,15 +283,15 @@ export default function MyScreen() {
     },
     {
       label: t('my_family_manage'),
-      onPress: user?.familyId ? handleLeaveFamily : () => {},
+      onPress: user?.familyId ? handleLeaveFamily : () => Alert.alert('가족 미연결', '아직 가족과 연결되어 있지 않아요.'),
     },
     {
       label: t('my_notification'),
-      onPress: () => {},
+      onPress: () => Alert.alert('준비 중', '알림 설정은 아래 카드에서 변경할 수 있어요.'),
     },
     {
       label: t('my_share_scope'),
-      onPress: () => {},
+      onPress: () => Alert.alert('준비 중', '공유 범위 설정은 곧 제공될 예정이에요.'),
     },
     {
       label: '이용약관 / 개인정보처리방침',
