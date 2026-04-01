@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## [1.17.0] - 2026.04.01
+
+### ✨ 새 기능
+- my.tsx 전체 버튼 연결 및 home.tsx 벨/DarkCard 연결
+- home.tsx 버튼 3개 onClick 연결 및 records 화면 추가
+- 크림 테마 적용한 전체 UI 리디자인 및 새로운 온보딩 화면
+- 트리거 체크인 기능 추가
+
+### 🐛 버그 수정
+- FABZone 메인 FAB onClick 버그 수정
+- 체크인 2-모드 토글 및 저장 버튼, my.tsx 라우팅 오류 수정
+- 배지 수집 경로 오류 및 Admin SDK initializeApp 500 에러 수정
+
+---
+
 ## [1.16.0] - 2026.04.01
 
 ### ✨ 새 기능
