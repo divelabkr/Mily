@@ -219,11 +219,19 @@ export default function HomeScreen() {
           )}
         </DarkCard>
 
-        {/* GoldCard — AI 인사이트 */}
-        <GoldCard style={styles.goldCard}>
-          <Text style={styles.goldCardEmoji}>💬</Text>
-          <Text style={styles.goldCardText}>{t('home_ai_comment_default')}</Text>
-        </GoldCard>
+        {/* GoldCard — AI 인사이트 (터치 → 주간회고) */}
+        <TouchableOpacity
+          onPress={() => router.push('/(adult)/review')}
+          activeOpacity={0.8}
+        >
+          <GoldCard style={styles.goldCard}>
+            <Text style={styles.goldCardEmoji}>💬</Text>
+            <View style={styles.goldCardBody}>
+              <Text style={styles.goldCardText}>{t('home_ai_comment_default')}</Text>
+              <Text style={styles.goldCardCta}>가족이랑 얘기해볼까요? →</Text>
+            </View>
+          </GoldCard>
+        </TouchableOpacity>
 
         {/* 거의 다 왔어요 카드 */}
         {nearestAchievement && (
@@ -240,10 +248,31 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
+        {/* 연속기록 카드 → 업적 도감 */}
+        {checkIns.length > 0 && (
+          <TouchableOpacity
+            style={styles.streakCard}
+            onPress={() => router.push('/(adult)/achievements')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.streakText}>🔥 {checkIns.length}일 연속 기록</Text>
+            <Text style={styles.streakArrow}>›</Text>
+          </TouchableOpacity>
+        )}
+
         {/* 최근 기록 3개 */}
         {recentThree.length > 0 ? (
           <View style={styles.recentSection}>
-            <Text style={styles.recentTitle}>최근 기록</Text>
+            <View style={styles.recentHeader}>
+              <Text style={styles.recentTitle}>최근 기록</Text>
+              <TouchableOpacity
+                onPress={() => router.push('/(adult)/records')}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.recentViewAll}>전체보기 →</Text>
+              </TouchableOpacity>
+            </View>
             {recentThree.map((ci) => {
               const cat = DEFAULT_CATEGORIES.find((c) => c.id === ci.categoryId);
               return (
@@ -359,12 +388,21 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginTop: 1,
   },
-  goldCardText: {
+  goldCardBody: {
     flex: 1,
+  },
+  goldCardText: {
     fontSize: 14,
     color: theme.milyColors.brownDark,
     lineHeight: 21,
     fontWeight: '500',
+    marginBottom: 6,
+  },
+  goldCardCta: {
+    fontSize: 13,
+    color: theme.milyColors.brownDark,
+    fontWeight: '700',
+    opacity: 0.7,
   },
   nearestCard: {
     backgroundColor: '#FFF8EC',
@@ -390,16 +428,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.milyColors.brownMid,
   },
+  streakCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF3E0',
+    borderRadius: theme.borderRadius.card,
+    borderWidth: 1,
+    borderColor: '#FFCC80',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 14,
+  },
+  streakText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.milyColors.brownDark,
+  },
+  streakArrow: {
+    fontSize: 20,
+    color: theme.milyColors.brownMid,
+  },
   recentSection: {
     marginTop: 4,
     marginBottom: 8,
+  },
+  recentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   recentTitle: {
     fontSize: 14,
     fontWeight: '600',
     color: theme.milyColors.brownMid,
-    marginBottom: 12,
     letterSpacing: 0.3,
+  },
+  recentViewAll: {
+    fontSize: 13,
+    color: theme.milyColors.coral,
+    fontWeight: '600',
   },
   recentRow: {
     flexDirection: 'row',

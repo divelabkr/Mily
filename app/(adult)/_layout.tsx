@@ -85,6 +85,10 @@ export default function AdultLayout() {
         name="simulator"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="records"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }
