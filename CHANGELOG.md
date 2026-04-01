@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [1.15.0] - 2026.04.01
+
+### ✨ 새 기능
+- 홈 화면 버튼 3개 onClick 이벤트 연결 및 records 화면 추가
+- 크림 테마 적용한 전체 UI 리디자인, 체크인 트리거 및 새로운 온보딩 화면 구현
+
+### 🐛 버그 수정
+- 체크인 2-모드 토글, 저장 버튼 및 my.tsx 라우팅 오류 수정
+- 뱃지 수집 경로 오류 및 Admin SDK initializeApp 관련 500 에러 해결
+- 온보딩 플로우 중 AuthGate가 role-select로 잘못 리다이렉트되는 문제 수정
+- onAuthStateChanged와 Firestore 토큰 주입 간의 race condition 해결
+
+---
+
 ## [1.14.3] - 2026.03.31
 
 ### ✨ 새 기능
