@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ScreenLayout } from '../../src/ui/layouts/ScreenLayout';
@@ -136,7 +136,16 @@ export default function HomeScreen() {
         <View style={styles.container}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>{t('home_title')}</Text>
-            {user && <GiftIcon uid={user.uid} activeCount={activeCouponCount} />}
+            <View style={styles.headerIcons}>
+              <TouchableOpacity
+                onPress={() => Alert.alert('준비 중이에요 🛠️', '알림 설정은 곧 제공될 예정이에요.')}
+                style={styles.bellButton}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.bellIcon}>🔔</Text>
+              </TouchableOpacity>
+              {user && <GiftIcon uid={user.uid} activeCount={activeCouponCount} />}
+            </View>
           </View>
           <EmptyState message={t('empty_home_no_plan')} />
         </View>
@@ -162,10 +171,24 @@ export default function HomeScreen() {
         {/* 헤더 */}
         <View style={styles.headerRow}>
           <Text style={styles.title}>{t('home_title')}</Text>
-          {user && <GiftIcon uid={user.uid} activeCount={activeCouponCount} />}
+          <View style={styles.headerIcons}>
+            <TouchableOpacity
+              onPress={() => Alert.alert('준비 중이에요 🛠️', '알림 설정은 곧 제공될 예정이에요.')}
+              style={styles.bellButton}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.bellIcon}>🔔</Text>
+            </TouchableOpacity>
+            {user && <GiftIcon uid={user.uid} activeCount={activeCouponCount} />}
+          </View>
         </View>
 
-        {/* DarkCard — 이번 주 선택소비 큰 숫자 */}
+        {/* DarkCard — 이번 주 선택소비 큰 숫자 (탭 → 전체 기록) */}
+        <TouchableOpacity
+          onPress={() => router.push('/(adult)/records')}
+          activeOpacity={0.85}
+        >
         <DarkCard style={styles.darkCard}>
           <Text style={styles.darkCardLabel}>✨ 이번 주 선택소비</Text>
           <Text style={styles.darkCardAmount}>
@@ -218,6 +241,7 @@ export default function HomeScreen() {
             </Text>
           )}
         </DarkCard>
+        </TouchableOpacity>
 
         {/* GoldCard — AI 인사이트 (터치 → 주간회고) */}
         <TouchableOpacity
@@ -316,6 +340,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bellButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bellIcon: {
+    fontSize: 22,
   },
   title: {
     fontSize: 26,
